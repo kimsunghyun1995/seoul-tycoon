@@ -9,6 +9,7 @@ const REFRESH_INTERVAL = 5 * 60 * 1000
 export interface SeoulDataState {
   data: Map<string, AreaData>
   congestionMap: Map<string, CongestionLevel>
+  populationMap: Map<string, number>
   loading: boolean
   error: string | null
   lastUpdated: Date | null
@@ -20,24 +21,29 @@ export function useSeoulData(apiKey: string) {
   const [state, setState] = useState<SeoulDataState>({
     data: new Map(),
     congestionMap: new Map(),
+    populationMap: new Map(),
     loading: true,
     error: null,
     lastUpdated: null,
     isOffline: false,
   })
 
-  const buildCongestionMap = useCallback((data: Map<string, AreaData>): Map<string, CongestionLevel> => {
+  const buildMaps = useCallback((data: Map<string, AreaData>): {
+    congestionMap: Map<string, CongestionLevel>
+    populationMap: Map<string, number>
+  } => {
     const congestionMap = new Map<string, CongestionLevel>()
+    const populationMap = new Map<string, number>()
     for (const [name, areaData] of data.entries()) {
-      if (areaData.population?.areaCongestLvl) {
-        // Map by location name → find code
-        const loc = LOCATION_BY_NAME.get(name)
-        if (loc) {
+      const loc = LOCATION_BY_NAME.get(name)
+      if (loc && areaData.population) {
+        if (areaData.population.areaCongestLvl) {
           congestionMap.set(loc.code, areaData.population.areaCongestLvl)
         }
+        populationMap.set(loc.code, areaData.population.areaPopMin)
       }
     }
-    return congestionMap
+    return { congestionMap, populationMap }
   }, [])
 
   const fetchAll = useCallback(async () => {
@@ -46,14 +52,16 @@ export function useSeoulData(apiKey: string) {
 
     try {
       const result = await service.fetchAreas(AREA_NAMES)
-      const congestionMap = buildCongestionMap(result)
       // If no results came back, treat as offline (all fetches failed silently)
       const isOffline = result.size === 0
       const cached = service.getCache()
+      const activeData = isOffline && cached.size > 0 ? cached : result.size > 0 ? result : null
+      const { congestionMap, populationMap } = buildMaps(activeData ?? new Map())
       setState(prev => ({
         ...prev,
-        data: isOffline && cached.size > 0 ? cached : result.size > 0 ? result : prev.data,
+        data: activeData ?? prev.data,
         congestionMap,
+        populationMap,
         loading: false,
         error: isOffline ? 'No data received' : null,
         lastUpdated: isOffline ? prev.lastUpdated : new Date(),
@@ -61,15 +69,18 @@ export function useSeoulData(apiKey: string) {
       }))
     } catch (err) {
       const cached = service.getCache()
+      const { congestionMap, populationMap } = cached.size > 0 ? buildMaps(cached) : { congestionMap: new Map(), populationMap: new Map() }
       setState(prev => ({
         ...prev,
         data: cached.size > 0 ? cached : prev.data,
+        congestionMap,
+        populationMap,
         loading: false,
         error: err instanceof Error ? err.message : 'Unknown error',
         isOffline: true,
       }))
     }
-  }, [buildCongestionMap])
+  }, [buildMaps])
 
   useEffect(() => {
     serviceRef.current = new SeoulApiService(apiKey)

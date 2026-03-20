@@ -11,7 +11,7 @@ import { LOCATIONS, LOCATION_MAP } from './services/LocationRegistry'
 const API_KEY = import.meta.env.VITE_SEOUL_API_KEY ?? ''
 
 export default function App() {
-  const { data, congestionMap, loading, error, lastUpdated, isOffline } = useSeoulData(API_KEY)
+  const { data, congestionMap, populationMap, loading, error, lastUpdated, isOffline } = useSeoulData(API_KEY)
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
 
   // Get weather from the first available area with weather data
@@ -41,7 +41,7 @@ export default function App() {
       {/* SVG Map with PixiJS character overlay inside same transformed container */}
       <div className="absolute inset-0 z-2">
         <SeoulMap
-          overlay={<CharacterSystem locations={LOCATIONS} congestionMap={congestionMap} />}
+          overlay={<CharacterSystem locations={LOCATIONS} congestionMap={congestionMap} populationMap={populationMap} />}
         >
           {/* Hotspot markers rendered inside SVG */}
           <HotspotLayer

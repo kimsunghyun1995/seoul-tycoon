@@ -2,11 +2,21 @@ import { useEffect, useRef, useCallback } from 'react'
 import { Application, Graphics, Container, Ticker } from 'pixi.js'
 import type { CongestionLevel, Location } from '../types'
 
-const CONGESTION_COUNT: Record<CongestionLevel, [number, number]> = {
-  '여유': [2, 5],
-  '보통': [5, 10],
-  '약간 붐빔': [10, 20],
-  '붐빔': [20, 40],
+const CHARS_PER_100_PEOPLE = 1
+const MAX_CHARS_PER_HOTSPOT = 500
+// Fallback counts when population data is unavailable
+const CONGESTION_FALLBACK_COUNT: Record<CongestionLevel, number> = {
+  '여유': 3,
+  '보통': 8,
+  '약간 붐빔': 15,
+  '붐빔': 30,
+}
+
+function populationToCharCount(population: number | undefined, congestion: CongestionLevel): number {
+  if (population != null && population > 0) {
+    return Math.min(MAX_CHARS_PER_HOTSPOT, Math.floor(population / 100 * CHARS_PER_100_PEOPLE))
+  }
+  return CONGESTION_FALLBACK_COUNT[congestion]
 }
 
 const HOTSPOT_RADIUS = 25
@@ -124,9 +134,10 @@ interface HotspotState {
 export interface CharacterSystemProps {
   locations: Location[]
   congestionMap: Map<string, CongestionLevel>
+  populationMap?: Map<string, number>
 }
 
-export default function CharacterSystem({ locations, congestionMap }: CharacterSystemProps) {
+export default function CharacterSystem({ locations, congestionMap, populationMap }: CharacterSystemProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const appRef = useRef<Application | null>(null)
   const hotspotsRef = useRef<Map<string, HotspotState>>(new Map())
@@ -235,8 +246,8 @@ export default function CharacterSystem({ locations, congestionMap }: CharacterS
 
     locations.forEach(loc => {
       const congestion = congestionMap.get(loc.code) ?? '여유'
-      const [min, max] = CONGESTION_COUNT[congestion]
-      const targetCount = Math.floor(min + Math.random() * (max - min))
+      const population = populationMap?.get(loc.code)
+      const targetCount = populationToCharCount(population, congestion)
 
       const existing = hotspots.get(loc.code)
       if (existing) {
@@ -251,7 +262,7 @@ export default function CharacterSystem({ locations, congestionMap }: CharacterS
         })
       }
     })
-  }, [locations, congestionMap])
+  }, [locations, congestionMap, populationMap])
 
   return (
     <canvas
