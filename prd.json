@@ -96,7 +96,7 @@
       "description": "Connect all components with real data flow. App loads → fetch all 122 areas → populate markers, characters, weather, air quality. Auto-refresh updates all components. Loading screen on initial fetch. Error handling: show cached data on failure, offline banner. 'Last updated' indicator.",
       "test_command": "npm test",
       "acceptance": "Full data flow works end-to-end, loading state shown, error states handled, auto-refresh updates UI",
-      "passes": false
+      "passes": true
     },
     {
       "id": "ST-11",
@@ -104,7 +104,7 @@
       "description": "Final visual polish: consistent pastel palette, smooth animations, proper z-indexing. Mobile touch interactions (pinch zoom, swipe bottom sheet). Performance optimization: sprite batching, throttled re-renders. Favicon and meta tags. README with setup instructions.",
       "test_command": "npm run build && npm test",
       "acceptance": "Smooth 60fps on mobile, all interactions feel polished, build succeeds with no warnings",
-      "passes": false
+      "passes": true
     }
   ],
   "test_commands": {
