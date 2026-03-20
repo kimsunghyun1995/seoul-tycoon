@@ -1,0 +1,106 @@
+{
+  "project": "Seoul Tycoon",
+  "description": "Real-time Seoul population visualization with tycoon game aesthetics",
+  "repository": "https://github.com/kimsunghyun1995/seoul-tycoon",
+  "tech_stack": {
+    "framework": "React 18 + TypeScript 5",
+    "build": "Vite",
+    "rendering": "PixiJS 8",
+    "map": "Custom SVG",
+    "styling": "Tailwind CSS",
+    "deployment": "Vercel"
+  },
+  "data_source": {
+    "api": "Seoul Open Data Integrated Real-time API (OA-21285)",
+    "endpoint": "http://openapi.seoul.go.kr:8088/{KEY}/json/citydata/1/5/{AREA_NAME}",
+    "refresh_interval": "5 minutes",
+    "locations": 122
+  },
+  "sub_tasks": [
+    {
+      "id": 1,
+      "title": "Project scaffolding",
+      "description": "Initialize Vite + React + TypeScript project. Install PixiJS, Tailwind CSS. Set up folder structure: src/{components,services,assets,types,hooks}. Configure environment variable for API key (VITE_SEOUL_API_KEY). Add .env.example.",
+      "test_command": "npm run build",
+      "acceptance": "Project builds successfully, dev server starts, folder structure in place"
+    },
+    {
+      "id": 2,
+      "title": "Seoul SVG map component",
+      "description": "Create SeoulMap component with simplified SVG of Seoul's 25 districts. Include Han River path, major roads, district boundaries. Implement pan and zoom (CSS transform with touch/mouse events). Map fills viewport. Pastel green color scheme.",
+      "test_command": "npm test",
+      "acceptance": "SVG map renders full viewport, pan/zoom works on mobile and desktop, districts visible with Han River"
+    },
+    {
+      "id": 3,
+      "title": "Location registry (122 hotspot coordinate mapping)",
+      "description": "Create LocationRegistry data file mapping all 122 Seoul hotspot names/codes to SVG coordinates (x,y). Source the official 122 location list from Seoul Open Data (서울시 주요 122장소 목록.xlsx). Map each location to approximate position on the SVG map. Export as typed constant array. This is a data-entry intensive task.",
+      "test_command": "npm test",
+      "acceptance": "All 122 locations have valid SVG coordinates, exported as typed constant, importable by other components"
+    },
+    {
+      "id": 4,
+      "title": "Hotspot marker component",
+      "description": "Create HotspotMarker component with floating label + pulsing dot. Render all 122 markers on the map using LocationRegistry data. Dot color changes by congestion level prop (green/orange/red). Click handler for selection.",
+      "test_command": "npm test",
+      "acceptance": "122 markers rendered at correct positions, dots pulse, colors change by congestion level, click selects marker"
+    },
+    {
+      "id": 5,
+      "title": "Seoul API service and data store",
+      "description": "Create SeoulApiService to fetch data from Seoul Integrated API. Implement batched fetching with concurrency limit (5 parallel, adjust based on rate limit testing). Create DataStore with in-memory cache (Map<string, AreaData>). Auto-refresh every 5 minutes. Parse population (LIVE_PPLTN_STTS), weather (WEATHER_STTS), air quality (AIR_STTS) from response. Type definitions for all API response shapes.",
+      "test_command": "npm test",
+      "acceptance": "Service fetches data for sample area, parses correctly, cache stores/retrieves, auto-refresh timer works"
+    },
+    {
+      "id": 6,
+      "title": "PixiJS character system",
+      "description": "Create PixiJS canvas overlay on top of SVG map. Implement Character class with kawaii sprite (round head, colored body, animated legs). Implement CharacterManager that spawns/despawns characters per hotspot based on congestion level (여유:2-5, 보통:5-10, 약간붐빔:10-20, 붐빔:20-40). Characters walk randomly within hotspot radius. Bouncy walk animation. Object pool for performance. Fade in/out on spawn/despawn.",
+      "test_command": "npm test",
+      "acceptance": "Characters render on canvas, walk with animation, count matches congestion level, smooth spawn/despawn"
+    },
+    {
+      "id": 7,
+      "title": "Weather animation overlay",
+      "description": "Create WeatherOverlay component with CSS animations. Implement: sun with pulse glow, drifting clouds, rain particles, snow particles, fine dust haze overlay. Sky gradient changes by weather state. Drive animations from real-time weather data (sky status from API). Smooth transitions between weather states.",
+      "test_command": "npm test",
+      "acceptance": "All 4 weather states animate correctly, sky gradient changes, transitions are smooth"
+    },
+    {
+      "id": 8,
+      "title": "Top bar UI (weather + air quality badges)",
+      "description": "Create TopBar component with weather badge (icon + temperature + description) and air quality badge (PM2.5 value + color-coded level). Badges are semi-transparent with backdrop blur. Air quality badge changes color: green(good), yellow(moderate), orange(unhealthy), red(very unhealthy). Update from real-time data.",
+      "test_command": "npm test",
+      "acceptance": "Badges display correct data, air quality color changes by level, responsive on mobile"
+    },
+    {
+      "id": 9,
+      "title": "Bottom sheet detail panel",
+      "description": "Create BottomSheet component that slides up when hotspot is selected. Shows: area name, congestion level (with color), estimated population range, gender ratio bar, age group distribution bar chart. Tap map background to dismiss. Smooth slide animation.",
+      "test_command": "npm test",
+      "acceptance": "Bottom sheet slides up/down smoothly, displays all data fields, dismisses on background tap"
+    },
+    {
+      "id": 10,
+      "title": "Data integration and state management",
+      "description": "Connect all components with real data flow. App loads → fetch all 122 areas → populate markers, characters, weather, air quality. Auto-refresh updates all components. Loading screen on initial fetch. Error handling: show cached data on failure, offline banner. 'Last updated' indicator.",
+      "test_command": "npm test",
+      "acceptance": "Full data flow works end-to-end, loading state shown, error states handled, auto-refresh updates UI"
+    },
+    {
+      "id": 11,
+      "title": "Polish and responsive design",
+      "description": "Final visual polish: consistent pastel palette, smooth animations, proper z-indexing. Mobile touch interactions (pinch zoom, swipe bottom sheet). Performance optimization: sprite batching, throttled re-renders. Favicon and meta tags. README with setup instructions.",
+      "test_command": "npm run build && npm test",
+      "acceptance": "Smooth 60fps on mobile, all interactions feel polished, build succeeds with no warnings"
+    }
+  ],
+  "test_commands": {
+    "unit": "npm test",
+    "build": "npm run build",
+    "dev": "npm run dev"
+  },
+  "environment_variables": {
+    "VITE_SEOUL_API_KEY": "Seoul Open Data API key"
+  }
+}
