@@ -1,4 +1,4 @@
-export type CongestionLevel = '여유' | '보통' | '약간붐빔' | '붐빔'
+export type CongestionLevel = '여유' | '보통' | '약간 붐빔' | '붐빔'
 
 export type AirQualityLevel = '좋음' | '보통' | '나쁨' | '매우나쁨'
 

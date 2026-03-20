@@ -10,7 +10,7 @@ interface HotspotMarkerProps {
 const CONGESTION_COLOR: Record<CongestionLevel, string> = {
   '여유': '#4caf50',
   '보통': '#ffc107',
-  '약간붐빔': '#ff9800',
+  '약간 붐빔': '#ff9800',
   '붐빔': '#f44336',
 }
 

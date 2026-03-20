@@ -30,7 +30,7 @@ describe('HotspotMarker', () => {
   it.each<[CongestionLevel, string]>([
     ['여유', '#4caf50'],
     ['보통', '#ffc107'],
-    ['약간붐빔', '#ff9800'],
+    ['약간 붐빔', '#ff9800'],
     ['붐빔', '#f44336'],
   ])('renders correct color for %s', (level, color) => {
     const { container } = render(

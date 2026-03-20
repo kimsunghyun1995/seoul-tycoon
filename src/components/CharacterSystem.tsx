@@ -5,7 +5,7 @@ import type { CongestionLevel, Location } from '../types'
 const CONGESTION_COUNT: Record<CongestionLevel, [number, number]> = {
   '여유': [2, 5],
   '보통': [5, 10],
-  '약간붐빔': [10, 20],
+  '약간 붐빔': [10, 20],
   '붐빔': [20, 40],
 }
 
