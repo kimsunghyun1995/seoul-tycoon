@@ -19,9 +19,12 @@ function populationToCharCount(population: number | undefined, congestion: Conge
   return CONGESTION_FALLBACK_COUNT[congestion]
 }
 
-const HOTSPOT_RADIUS = 25
+const BASE_HOTSPOT_RADIUS = 30
 const WALK_SPEED = 0.3
-const SPAWN_RADIUS = 20
+
+function getHotspotRadius(charCount: number): number {
+  return Math.max(BASE_HOTSPOT_RADIUS, Math.sqrt(charCount) * 3)
+}
 
 const BODY_COLORS = [
   0xff8fab, // pink
@@ -94,17 +97,17 @@ function randomInRadius(cx: number, cy: number, r: number): { x: number; y: numb
   return { x: cx + Math.cos(angle) * dist, y: cy + Math.sin(angle) * dist }
 }
 
-function spawnCharacter(homeX: number, homeY: number, bodyColor: number): Character {
+function spawnCharacter(homeX: number, homeY: number, bodyColor: number, radius: number): Character {
   const container = new Container()
   const graphics = createCharacterGraphics(bodyColor)
   container.addChild(graphics)
-  const pos = randomInRadius(homeX, homeY, SPAWN_RADIUS)
+  const pos = randomInRadius(homeX, homeY, radius * 0.7)
   container.x = pos.x
   container.y = pos.y
   container.alpha = 0
-  container.scale.set(0.7 + Math.random() * 0.6)
+  container.scale.set(0.9 + Math.random() * 0.4)
 
-  const target = randomInRadius(homeX, homeY, HOTSPOT_RADIUS)
+  const target = randomInRadius(homeX, homeY, radius)
 
   return {
     container,
@@ -129,6 +132,7 @@ interface HotspotState {
   congestion: CongestionLevel
   characters: Character[]
   targetCount: number
+  radius: number
 }
 
 export interface CharacterSystemProps {
@@ -173,7 +177,7 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
         // Spawn or despawn to match target count
         while (characters.length < targetCount) {
           const colorIdx = characters.length % BODY_COLORS.length
-          const char = spawnCharacter(state.location.x, state.location.y, BODY_COLORS[colorIdx])
+          const char = spawnCharacter(state.location.x, state.location.y, BODY_COLORS[colorIdx], state.radius)
           stageContainer.addChild(char.container)
           characters.push(char)
         }
@@ -216,7 +220,7 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
 
             if (dist < 2) {
               // Pick new random target within hotspot
-              const target = randomInRadius(char.homeX, char.homeY, HOTSPOT_RADIUS)
+              const target = randomInRadius(char.homeX, char.homeY, state.radius)
               char.targetX = target.x
               char.targetY = target.y
             } else {
@@ -248,17 +252,20 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
       const congestion = congestionMap.get(loc.code) ?? '여유'
       const population = populationMap?.get(loc.code)
       const targetCount = populationToCharCount(population, congestion)
+      const radius = getHotspotRadius(targetCount)
 
       const existing = hotspots.get(loc.code)
       if (existing) {
         existing.congestion = congestion
         existing.targetCount = targetCount
+        existing.radius = radius
       } else {
         hotspots.set(loc.code, {
           location: loc,
           congestion,
           characters: [],
           targetCount,
+          radius,
         })
       }
     })
