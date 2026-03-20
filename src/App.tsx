@@ -1,7 +1,9 @@
+import SeoulMap from './components/SeoulMap'
+
 function App() {
   return (
-    <div className="w-full h-full flex items-center justify-center bg-green-50">
-      <h1 className="text-2xl font-bold text-green-800">Seoul Tycoon</h1>
+    <div className="w-full h-full relative bg-green-50">
+      <SeoulMap />
     </div>
   )
 }
