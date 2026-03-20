@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useCallback, useEffect, type ReactNode } from 'react'
 
 interface Point {
   x: number
@@ -15,7 +15,11 @@ const INITIAL_SCALE = 1
 const MIN_SCALE = 0.5
 const MAX_SCALE = 4
 
-export default function SeoulMap() {
+interface SeoulMapProps {
+  children?: ReactNode
+}
+
+export default function SeoulMap({ children }: SeoulMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: INITIAL_SCALE })
 
@@ -118,13 +122,13 @@ export default function SeoulMap() {
           willChange: 'transform',
         }}
       >
-        <SeoulSVG />
+        <SeoulSVG>{children}</SeoulSVG>
       </div>
     </div>
   )
 }
 
-function SeoulSVG() {
+function SeoulSVG({ children }: { children?: ReactNode }) {
   return (
     <svg
       viewBox="0 0 800 700"
@@ -199,6 +203,9 @@ function SeoulSVG() {
           opacity="0.6"
         />
       ))}
+
+      {/* Children overlay (e.g. hotspot markers) */}
+      {children}
     </svg>
   )
 }
