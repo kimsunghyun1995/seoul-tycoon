@@ -19,9 +19,10 @@ const MAP_HEIGHT = 700
 interface SeoulMapProps {
   children?: ReactNode
   overlay?: ReactNode
+  scaleRef?: React.MutableRefObject<number>
 }
 
-export default function SeoulMap({ children, overlay }: SeoulMapProps) {
+export default function SeoulMap({ children, overlay, scaleRef }: SeoulMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 })
@@ -51,6 +52,11 @@ export default function SeoulMap({ children, overlay }: SeoulMapProps) {
     defaultTransformRef.current = t
     setTransform(t)
   }, [])
+
+  // Sync external scaleRef for consumers like CharacterSystem
+  useEffect(() => {
+    if (scaleRef) scaleRef.current = transform.scale
+  }, [transform.scale, scaleRef])
 
   const resetView = useCallback(() => {
     if (innerRef.current) innerRef.current.style.transition = 'transform 0.3s ease-out'

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import SeoulMap from './components/SeoulMap'
 import TopBar from './components/TopBar'
 import BottomSheet from './components/BottomSheet'
@@ -13,6 +13,7 @@ const API_KEY = import.meta.env.VITE_SEOUL_API_KEY ?? ''
 export default function App() {
   const { data, congestionMap, populationMap, loading, error, lastUpdated, isOffline } = useSeoulData(API_KEY)
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
+  const zoomScaleRef = useRef(1)
 
   // Get weather from the first available area with weather data
   const weather = useMemo(() => {
@@ -41,7 +42,8 @@ export default function App() {
       {/* SVG Map with PixiJS character overlay inside same transformed container */}
       <div className="absolute inset-0 z-2">
         <SeoulMap
-          overlay={<CharacterSystem locations={LOCATIONS} congestionMap={congestionMap} populationMap={populationMap} />}
+          scaleRef={zoomScaleRef}
+          overlay={<CharacterSystem locations={LOCATIONS} congestionMap={congestionMap} populationMap={populationMap} zoomScaleRef={zoomScaleRef} />}
         >
           {/* Hotspot markers rendered inside SVG */}
           <HotspotLayer

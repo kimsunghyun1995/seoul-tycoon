@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, type RefObject } from 'react'
 import { Application, Graphics, Container, Ticker } from 'pixi.js'
 import type { CongestionLevel, Location } from '../types'
 
@@ -135,17 +135,22 @@ interface HotspotState {
   radius: number
 }
 
+const DETAIL_ZOOM_THRESHOLD = 0.9  // below this: render as dots
+const SPAWN_THROTTLE_FRAMES = 3    // only spawn/despawn every N frames
+
 export interface CharacterSystemProps {
   locations: Location[]
   congestionMap: Map<string, CongestionLevel>
   populationMap?: Map<string, number>
+  zoomScaleRef?: RefObject<number>
 }
 
-export default function CharacterSystem({ locations, congestionMap, populationMap }: CharacterSystemProps) {
+export default function CharacterSystem({ locations, congestionMap, populationMap, zoomScaleRef }: CharacterSystemProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const appRef = useRef<Application | null>(null)
   const hotspotsRef = useRef<Map<string, HotspotState>>(new Map())
   const stageContainerRef = useRef<Container | null>(null)
+  const frameCountRef = useRef(0)
 
   const initPixi = useCallback(async () => {
     if (!canvasRef.current) return
@@ -170,26 +175,28 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
     app.ticker.add((ticker: Ticker) => {
       const dt = ticker.deltaTime
       const hotspots = hotspotsRef.current
+      const frame = ++frameCountRef.current
+      const doSpawnDespawn = frame % SPAWN_THROTTLE_FRAMES === 0
+      const scale = zoomScaleRef?.current ?? 1
+      const showDetail = scale >= DETAIL_ZOOM_THRESHOLD
 
       hotspots.forEach(state => {
         const { characters, targetCount } = state
 
-        // Spawn or despawn to match target count
-        while (characters.length < targetCount) {
-          const colorIdx = characters.length % BODY_COLORS.length
-          const char = spawnCharacter(state.location.x, state.location.y, BODY_COLORS[colorIdx], state.radius)
-          stageContainer.addChild(char.container)
-          characters.push(char)
-        }
+        // Throttle spawn/despawn to avoid frame drops during data refresh
+        if (doSpawnDespawn) {
+          // Spawn one character per frame batch (not all at once)
+          if (characters.length < targetCount) {
+            const colorIdx = characters.length % BODY_COLORS.length
+            const char = spawnCharacter(state.location.x, state.location.y, BODY_COLORS[colorIdx], state.radius)
+            stageContainer.addChild(char.container)
+            characters.push(char)
+          }
 
-        // Mark excess characters for despawning
-        if (characters.length > targetCount) {
-          const excess = characters.length - targetCount
-          for (let i = 0; i < excess; i++) {
-            const char = characters[characters.length - 1 - i]
-            if (char.state === 'walking') {
-              char.state = 'despawning'
-            }
+          // Mark one excess character for despawning
+          if (characters.length > targetCount) {
+            const char = characters[characters.length - 1]
+            if (char.state === 'walking') char.state = 'despawning'
           }
         }
 
@@ -219,7 +226,6 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
             const dist = Math.hypot(dx, dy)
 
             if (dist < 2) {
-              // Pick new random target within hotspot
               const target = randomInRadius(char.homeX, char.homeY, state.radius)
               char.targetX = target.x
               char.targetY = target.y
@@ -228,9 +234,16 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
               char.container.y += (dy / dist) * WALK_SPEED * dt
             }
 
-            // Animate legs
-            char.phase += 0.15 * dt
-            drawLegs(char.graphics, char.phase, char.bodyColor)
+            // LOD: full detail (legs + body) when zoomed in, dot only when zoomed out
+            if (showDetail) {
+              char.phase += 0.15 * dt
+              drawLegs(char.graphics, char.phase, char.bodyColor)
+            } else {
+              // Simple dot representation for performance at low zoom
+              char.graphics.clear()
+              char.graphics.circle(0, -5, 4)
+              char.graphics.fill({ color: char.bodyColor })
+            }
           }
         }
       })
