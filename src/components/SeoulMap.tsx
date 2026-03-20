@@ -49,11 +49,6 @@ export default function SeoulMap({ children }: SeoulMapProps) {
     isPanning.current = false
   }, [])
 
-  const onWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault()
-    const factor = e.deltaY < 0 ? 1.1 : 0.9
-    setTransform(t => ({ ...t, scale: clampScale(t.scale * factor) }))
-  }, [])
 
   // Touch handlers
   const onTouchStart = useCallback((e: React.TouchEvent) => {
@@ -69,35 +64,46 @@ export default function SeoulMap({ children }: SeoulMapProps) {
     }
   }, [])
 
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    e.preventDefault()
-    if (e.touches.length === 1 && isPanning.current) {
-      const dx = e.touches[0].clientX - lastPoint.current.x
-      const dy = e.touches[0].clientY - lastPoint.current.y
-      lastPoint.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      setTransform(t => ({ ...t, x: t.x + dx, y: t.y + dy }))
-    } else if (e.touches.length === 2 && lastPinchDist.current !== null) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX
-      const dy = e.touches[0].clientY - e.touches[1].clientY
-      const dist = Math.hypot(dx, dy)
-      const factor = dist / lastPinchDist.current
-      lastPinchDist.current = dist
-      setTransform(t => ({ ...t, scale: clampScale(t.scale * factor) }))
-    }
-  }, [])
 
   const onTouchEnd = useCallback(() => {
     isPanning.current = false
     lastPinchDist.current = null
   }, [])
 
-  // Prevent default wheel on container to allow custom zoom
+  // Native non-passive wheel and touchmove handlers (React registers these as passive by default)
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    const handler = (e: WheelEvent) => e.preventDefault()
-    el.addEventListener('wheel', handler, { passive: false })
-    return () => el.removeEventListener('wheel', handler)
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const factor = e.deltaY < 0 ? 1.1 : 0.9
+      setTransform(t => ({ ...t, scale: clampScale(t.scale * factor) }))
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
+      if (e.touches.length === 1 && isPanning.current) {
+        const dx = e.touches[0].clientX - lastPoint.current.x
+        const dy = e.touches[0].clientY - lastPoint.current.y
+        lastPoint.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        setTransform(t => ({ ...t, x: t.x + dx, y: t.y + dy }))
+      } else if (e.touches.length === 2 && lastPinchDist.current !== null) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX
+        const dy = e.touches[0].clientY - e.touches[1].clientY
+        const dist = Math.hypot(dx, dy)
+        const factor = dist / lastPinchDist.current
+        lastPinchDist.current = dist
+        setTransform(t => ({ ...t, scale: clampScale(t.scale * factor) }))
+      }
+    }
+
+    el.addEventListener('wheel', handleWheel, { passive: false })
+    el.addEventListener('touchmove', handleTouchMove, { passive: false })
+    return () => {
+      el.removeEventListener('wheel', handleWheel)
+      el.removeEventListener('touchmove', handleTouchMove)
+    }
   }, [])
 
   return (
@@ -108,9 +114,7 @@ export default function SeoulMap({ children }: SeoulMapProps) {
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseUp}
-      onWheel={onWheel}
       onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
       <div
