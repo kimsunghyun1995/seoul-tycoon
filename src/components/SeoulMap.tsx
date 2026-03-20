@@ -191,6 +191,19 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
       {/* Background */}
       <rect width="800" height="700" fill="url(#skyGrad)" />
 
+      {/* Gyeonggi-do surrounding region (simplified, non-interactive) */}
+      <path
+        d={GYEONGGI_PATH}
+        fill="#c8c8b8"
+        stroke="#aaaaa0"
+        strokeWidth="1.5"
+        opacity="0.55"
+      />
+      {/* Gyeonggi-do label in surrounding area */}
+      <text x="90" y="40" textAnchor="middle" fontSize="11" fill="#787870" fontWeight="500" opacity="0.7">경기도</text>
+      <text x="700" y="350" textAnchor="middle" fontSize="11" fill="#787870" fontWeight="500" opacity="0.7">경기도</text>
+      <text x="350" y="668" textAnchor="middle" fontSize="11" fill="#787870" fontWeight="500" opacity="0.7">경기도</text>
+
       {/* Districts - 25 Seoul-gu */}
       {DISTRICTS.map(d => (
         <path
@@ -367,3 +380,20 @@ const MAJOR_ROADS = [
   // Dongbu Expressway
   'M 530 150 C 535 220 540 290 545 360',
 ]
+
+// Simplified Gyeonggi-do region surrounding Seoul (irregular shape, clockwise from NW)
+const GYEONGGI_PATH = `
+  M 20 10
+  C 80 5, 200 2, 350 5
+  C 500 8, 650 5, 760 15
+  L 790 100
+  C 795 200, 795 300, 790 420
+  C 785 520, 790 600, 785 685
+  L 650 690
+  C 500 695, 350 695, 200 692
+  L 60 688
+  C 30 680, 12 650, 10 600
+  L 8 400
+  C 6 250, 10 130, 20 10
+  Z
+`
