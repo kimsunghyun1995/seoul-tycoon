@@ -1,0 +1,20 @@
+## Codebase Patterns
+- Vite + React 18 + TypeScript 5, module type ESM
+- Vitest for testing with jsdom environment, setup file at src/test/setup.ts
+- Tailwind CSS v4 via @tailwindcss/vite plugin (no tailwind.config.js needed)
+- PixiJS 8 installed as dependency
+- Types defined in src/types/index.ts
+- VITE_SEOUL_API_KEY env var declared in src/vite-env.d.ts
+
+## 2026-03-20 - ST-1
+- Scaffolded Vite + React + TypeScript project from scratch (npm create vite cancelled non-interactively, so manual approach used)
+- Installed: react, react-dom, pixi.js, vite, @vitejs/plugin-react, typescript, tailwindcss, @tailwindcss/vite, vitest, @testing-library/react, @testing-library/jest-dom, @testing-library/user-event, jsdom
+- Created src/{components,services,assets,types,hooks,test} directories
+- Created vite.config.ts, tsconfig.json, tsconfig.node.json, index.html, src/main.tsx, src/App.tsx, src/index.css, src/vite-env.d.ts, src/types/index.ts
+- Files changed: 14 new files
+- **Learnings for future iterations:**
+  - npm create vite does not work non-interactively - must scaffold manually
+  - Tailwind CSS v4 uses @tailwindcss/vite plugin, no config file needed, import with @import "tailwindcss"
+  - package.json needs "type": "module" for ESM
+  - vitest config goes inside vite.config.ts (add /// <reference types="vitest" />)
+---
