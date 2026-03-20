@@ -15,11 +15,15 @@ const INITIAL_SCALE = 1
 const MIN_SCALE = 0.5
 const MAX_SCALE = 4
 
+const MAP_WIDTH = 800
+const MAP_HEIGHT = 700
+
 interface SeoulMapProps {
   children?: ReactNode
+  overlay?: ReactNode
 }
 
-export default function SeoulMap({ children }: SeoulMapProps) {
+export default function SeoulMap({ children, overlay }: SeoulMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: INITIAL_SCALE })
@@ -33,6 +37,14 @@ export default function SeoulMap({ children }: SeoulMapProps) {
   const isPinching = useRef(false)
 
   const clampScale = (s: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s))
+
+  // Center the fixed-size map in the viewport on mount
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const { width, height } = el.getBoundingClientRect()
+    setTransform({ x: (width - MAP_WIDTH) / 2, y: (height - MAP_HEIGHT) / 2, scale: INITIAL_SCALE })
+  }, [])
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     isPanning.current = true
@@ -143,12 +155,14 @@ export default function SeoulMap({ children }: SeoulMapProps) {
           transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
           transformOrigin: '0 0',
           transition: 'transform 0.15s ease-out',
-          width: '100%',
-          height: '100%',
+          position: 'absolute',
+          width: MAP_WIDTH,
+          height: MAP_HEIGHT,
           willChange: 'transform',
         }}
       >
         <SeoulSVG>{children}</SeoulSVG>
+        {overlay}
       </div>
     </div>
   )

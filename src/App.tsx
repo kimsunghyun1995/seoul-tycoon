@@ -38,9 +38,11 @@ export default function App() {
       {/* Sky/weather gradient background */}
       <WeatherOverlay weather={weather} />
 
-      {/* SVG Map */}
+      {/* SVG Map with PixiJS character overlay inside same transformed container */}
       <div className="absolute inset-0 z-2">
-        <SeoulMap>
+        <SeoulMap
+          overlay={<CharacterSystem locations={LOCATIONS} congestionMap={congestionMap} />}
+        >
           {/* Hotspot markers rendered inside SVG */}
           <HotspotLayer
             locations={LOCATIONS}
@@ -49,11 +51,6 @@ export default function App() {
             onSelect={handleSelect}
           />
         </SeoulMap>
-      </div>
-
-      {/* PixiJS character overlay */}
-      <div className="absolute inset-0 z-3 pointer-events-none">
-        <CharacterSystem locations={LOCATIONS} congestionMap={congestionMap} />
       </div>
 
       {/* Top bar */}

@@ -71,8 +71,8 @@ describe('CharacterSystem', () => {
     )
     const canvas = getByTestId('character-canvas')
     expect(canvas.style.position).toBe('absolute')
-    expect(canvas.style.width).toBe('100%')
-    expect(canvas.style.height).toBe('100%')
+    expect(canvas.style.width).toBe('800px')
+    expect(canvas.style.height).toBe('700px')
     expect(canvas.style.pointerEvents).toBe('none')
   })
 

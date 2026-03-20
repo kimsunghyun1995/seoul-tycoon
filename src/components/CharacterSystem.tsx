@@ -140,8 +140,11 @@ export default function CharacterSystem({ locations, congestionMap }: CharacterS
     await app.init({
       canvas: canvasRef.current,
       backgroundAlpha: 0,
-      resizeTo: canvasRef.current.parentElement ?? canvasRef.current,
+      width: 800,
+      height: 700,
       antialias: true,
+      resolution: window.devicePixelRatio || 1,
+      autoDensity: true,
     })
     appRef.current = app
 
@@ -258,8 +261,8 @@ export default function CharacterSystem({ locations, congestionMap }: CharacterS
         position: 'absolute',
         top: 0,
         left: 0,
-        width: '100%',
-        height: '100%',
+        width: 800,
+        height: 700,
         pointerEvents: 'none',
       }}
     />
