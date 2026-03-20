@@ -8,6 +8,15 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      '/api/seoul': {
+        target: 'http://openapi.seoul.go.kr:8088',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/seoul/, ''),
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,

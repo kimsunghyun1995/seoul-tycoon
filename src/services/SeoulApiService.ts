@@ -1,6 +1,7 @@
 import type { AreaData, PopulationData, WeatherData, CongestionLevel, AirQualityLevel } from '../types'
 
-const API_BASE = 'http://openapi.seoul.go.kr:8088'
+// Use Vite dev proxy to avoid CORS; in production use a serverless proxy
+const API_BASE = import.meta.env.DEV ? '/api/seoul' : 'http://openapi.seoul.go.kr:8088'
 const CONCURRENCY_LIMIT = 5
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
@@ -36,6 +37,20 @@ function parsePopulation(raw: any): PopulationData | null {
 function parseWeather(raw: any): WeatherData | null {
   const w = raw?.WEATHER_STTS?.[0]
   if (!w) return null
+
+  // SKY_STTS is only in FCST24HOURS forecast entries, not current weather
+  // Derive sky status from PRECPT_TYPE and first forecast entry
+  const forecasts = w.FCST24HOURS ?? []
+  const firstForecast = Array.isArray(forecasts) ? forecasts[0] : null
+  const skyStatus = firstForecast?.SKY_STTS ?? ''
+
+  // Derive current sky: use precipitation type or forecast sky
+  let currentSky = skyStatus
+  const precptType = w.PRECPT_TYPE ?? ''
+  if (precptType === '비') currentSky = '비'
+  else if (precptType === '눈') currentSky = '눈'
+  else if (precptType === '비/눈') currentSky = '비/눈'
+
   return {
     weatherTime: w.WEATHER_TIME ?? '',
     temp: Number(w.TEMP ?? 0),
@@ -43,11 +58,11 @@ function parseWeather(raw: any): WeatherData | null {
     maxTemp: Number(w.MAX_TEMP ?? 0),
     minTemp: Number(w.MIN_TEMP ?? 0),
     humidity: Number(w.HUMIDITY ?? 0),
-    wind: w.WIND ?? '',
+    wind: w.WIND_DIRCT ?? '',
     windSpd: Number(w.WIND_SPD ?? 0),
     precipitation: w.PRECIPITATION ?? '',
-    precipitationType: w.PRECPT_TYPE ?? '',
-    skyStatus: w.SKY_STTS ?? '',
+    precipitationType: precptType,
+    skyStatus: currentSky,
     uvIdx: w.UV_INDEX ?? '',
     uvIdxLvl: w.UV_INDEX_LVL ?? '',
     pm25: Number(w.PM25 ?? 0),
