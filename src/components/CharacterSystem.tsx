@@ -57,12 +57,12 @@ interface Character {
 function createCharacterGraphics(bodyColor: number): Graphics {
   const g = new Graphics()
 
-  // Head (round)
-  g.circle(0, -10, 5)
+  // Head (round) - 1.5px radius
+  g.circle(0, -4, 1.5)
   g.fill({ color: 0xffe4c4 })
 
-  // Body
-  g.roundRect(-4, -5, 8, 9, 2)
+  // Body - 2x3px
+  g.roundRect(-1, -2.5, 2, 3, 0.5)
   g.fill({ color: bodyColor })
 
   return g
@@ -72,23 +72,23 @@ function drawLegs(g: Graphics, phase: number, bodyColor: number): void {
   g.clear()
 
   // Head
-  g.circle(0, -10, 5)
+  g.circle(0, -4, 1.5)
   g.fill({ color: 0xffe4c4 })
 
   // Body
-  g.roundRect(-4, -5, 8, 9, 2)
+  g.roundRect(-1, -2.5, 2, 3, 0.5)
   g.fill({ color: bodyColor })
 
   // Animated legs
-  const legSwing = Math.sin(phase) * 3
+  const legSwing = Math.sin(phase) * 1
   // Left leg
-  g.moveTo(-2, 4)
-  g.lineTo(-2 + legSwing, 10)
-  g.stroke({ color: bodyColor, width: 2 })
+  g.moveTo(-0.5, 0.5)
+  g.lineTo(-0.5 + legSwing, 2.5)
+  g.stroke({ color: bodyColor, width: 0.8 })
   // Right leg
-  g.moveTo(2, 4)
-  g.lineTo(2 - legSwing, 10)
-  g.stroke({ color: bodyColor, width: 2 })
+  g.moveTo(0.5, 0.5)
+  g.lineTo(0.5 - legSwing, 2.5)
+  g.stroke({ color: bodyColor, width: 0.8 })
 }
 
 function randomInRadius(cx: number, cy: number, r: number): { x: number; y: number } {
@@ -105,7 +105,7 @@ function spawnCharacter(homeX: number, homeY: number, bodyColor: number, radius:
   container.x = pos.x
   container.y = pos.y
   container.alpha = 0
-  container.scale.set(0.9 + Math.random() * 0.4)
+  container.scale.set(0.8 + Math.random() * 0.2)
 
   const target = randomInRadius(homeX, homeY, radius)
 
@@ -135,7 +135,7 @@ interface HotspotState {
   radius: number
 }
 
-const DETAIL_ZOOM_THRESHOLD = 0.9  // below this: render as dots
+const DETAIL_ZOOM_THRESHOLD = 2.0  // below this: render as dots
 const SPAWN_THROTTLE_FRAMES = 3    // only spawn/despawn every N frames
 
 export interface CharacterSystemProps {
@@ -241,7 +241,7 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
             } else {
               // Simple dot representation for performance at low zoom
               char.graphics.clear()
-              char.graphics.circle(0, -5, 4)
+              char.graphics.circle(0, -2, 2)
               char.graphics.fill({ color: char.bodyColor })
             }
           }
