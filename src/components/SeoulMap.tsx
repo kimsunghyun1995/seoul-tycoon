@@ -11,9 +11,7 @@ interface Transform {
   scale: number
 }
 
-const INITIAL_SCALE = 1
-const MIN_SCALE = 0.5
-const MAX_SCALE = 4
+const MAX_SCALE = 6
 
 const MAP_WIDTH = 800
 const MAP_HEIGHT = 700
@@ -26,7 +24,9 @@ interface SeoulMapProps {
 export default function SeoulMap({ children, overlay }: SeoulMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
-  const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: INITIAL_SCALE })
+  const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 })
+  const minScaleRef = useRef(0.5)
+  const defaultTransformRef = useRef<Transform>({ x: 0, y: 0, scale: 1 })
 
   // Pan state
   const isPanning = useRef(false)
@@ -36,14 +36,25 @@ export default function SeoulMap({ children, overlay }: SeoulMapProps) {
   const lastPinchDist = useRef<number | null>(null)
   const isPinching = useRef(false)
 
-  const clampScale = (s: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s))
+  const clampScale = useCallback((s: number) => Math.min(MAX_SCALE, Math.max(minScaleRef.current, s)), [])
 
-  // Center the fixed-size map in the viewport on mount
+  // Compute initial transform: fit the map in the viewport with padding
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
     const { width, height } = el.getBoundingClientRect()
-    setTransform({ x: (width - MAP_WIDTH) / 2, y: (height - MAP_HEIGHT) / 2, scale: INITIAL_SCALE })
+    const scale = Math.min(width / MAP_WIDTH, height / MAP_HEIGHT) * 0.92
+    minScaleRef.current = scale
+    const x = (width - MAP_WIDTH * scale) / 2
+    const y = (height - MAP_HEIGHT * scale) / 2
+    const t = { x, y, scale }
+    defaultTransformRef.current = t
+    setTransform(t)
+  }, [])
+
+  const resetView = useCallback(() => {
+    if (innerRef.current) innerRef.current.style.transition = 'transform 0.3s ease-out'
+    setTransform(defaultTransformRef.current)
   }, [])
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
@@ -62,6 +73,19 @@ export default function SeoulMap({ children, overlay }: SeoulMapProps) {
   const onMouseUp = useCallback(() => {
     isPanning.current = false
   }, [])
+
+  const onDoubleClick = useCallback((e: React.MouseEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const cx = e.clientX - rect.left
+    const cy = e.clientY - rect.top
+    if (innerRef.current) innerRef.current.style.transition = 'transform 0.25s ease-out'
+    setTransform(t => {
+      const newScale = clampScale(t.scale * 2)
+      const ratio = newScale / t.scale
+      return { x: cx - (cx - t.x) * ratio, y: cy - (cy - t.y) * ratio, scale: newScale }
+    })
+  }, [clampScale])
 
 
   // Touch handlers
@@ -146,6 +170,7 @@ export default function SeoulMap({ children, overlay }: SeoulMapProps) {
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseUp}
+      onDoubleClick={onDoubleClick}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
@@ -164,6 +189,31 @@ export default function SeoulMap({ children, overlay }: SeoulMapProps) {
         <SeoulSVG>{children}</SeoulSVG>
         {overlay}
       </div>
+
+      {/* Reset view button */}
+      <button
+        onClick={resetView}
+        aria-label="지도 초기화"
+        style={{
+          position: 'absolute',
+          bottom: 16,
+          right: 16,
+          width: 40,
+          height: 40,
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.88)',
+          border: '1px solid rgba(0,0,0,0.12)',
+          cursor: 'pointer',
+          fontSize: 18,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10,
+          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+        }}
+      >
+        ⌂
+      </button>
     </div>
   )
 }
