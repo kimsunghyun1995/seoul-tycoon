@@ -60,7 +60,6 @@ describe('SeoulApiService', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
-    service.stopAutoRefresh()
   })
 
   it('fetches and parses area data', async () => {
@@ -145,14 +144,4 @@ describe('SeoulApiService', () => {
     await expect(service.fetchArea('경복궁')).rejects.toThrow('API error: 403')
   })
 
-  it('startAutoRefresh sets up interval and stopAutoRefresh clears it', () => {
-    const setIntervalSpy = vi.spyOn(globalThis, 'setInterval')
-    const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval')
-
-    service.startAutoRefresh(['경복궁'])
-    expect(setIntervalSpy).toHaveBeenCalledOnce()
-
-    service.stopAutoRefresh()
-    expect(clearIntervalSpy).toHaveBeenCalledOnce()
-  })
 })

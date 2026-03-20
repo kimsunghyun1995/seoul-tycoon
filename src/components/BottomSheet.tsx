@@ -1,18 +1,5 @@
-import type { AreaData, CongestionLevel } from '../types'
-
-const CONGESTION_COLOR: Record<CongestionLevel, string> = {
-  '여유': '#4caf50',
-  '보통': '#ffc107',
-  '약간 붐빔': '#ff9800',
-  '붐빔': '#f44336',
-}
-
-const CONGESTION_BG: Record<CongestionLevel, string> = {
-  '여유': '#e8f5e9',
-  '보통': '#fff8e1',
-  '약간 붐빔': '#fff3e0',
-  '붐빔': '#ffebee',
-}
+import type { AreaData } from '../types'
+import { CONGESTION_COLOR, CONGESTION_BG } from '../constants/colors'
 
 const AGE_LABELS = ['0대', '10대', '20대', '30대', '40대', '50대', '60대', '70대+']
 

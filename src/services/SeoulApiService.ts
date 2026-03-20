@@ -75,7 +75,6 @@ function parseWeather(raw: any): WeatherData | null {
 export class SeoulApiService {
   private readonly apiKey: string
   private cache: Map<string, AreaData> = new Map()
-  private refreshTimer: ReturnType<typeof setInterval> | null = null
 
   constructor(apiKey: string) {
     this.apiKey = apiKey
@@ -140,20 +139,6 @@ export class SeoulApiService {
     return Date.now() - data.fetchedAt < CACHE_TTL_MS
   }
 
-  startAutoRefresh(areaNames: string[], onUpdate?: (data: Map<string, AreaData>) => void): void {
-    this.stopAutoRefresh()
-    this.refreshTimer = setInterval(async () => {
-      const updated = await this.fetchAreas(areaNames)
-      onUpdate?.(updated)
-    }, CACHE_TTL_MS)
-  }
-
-  stopAutoRefresh(): void {
-    if (this.refreshTimer !== null) {
-      clearInterval(this.refreshTimer)
-      this.refreshTimer = null
-    }
-  }
 }
 
 // Singleton for app use

@@ -1,17 +1,11 @@
 import type { CongestionLevel, Location } from '../types'
+import { CONGESTION_COLOR } from '../constants/colors'
 
 interface HotspotMarkerProps {
   location: Location
   congestionLevel?: CongestionLevel
   isSelected?: boolean
   onClick?: (code: string) => void
-}
-
-const CONGESTION_COLOR: Record<CongestionLevel, string> = {
-  '여유': '#4caf50',
-  '보통': '#ffc107',
-  '약간 붐빔': '#ff9800',
-  '붐빔': '#f44336',
 }
 
 export default function HotspotMarker({

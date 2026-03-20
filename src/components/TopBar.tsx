@@ -1,4 +1,5 @@
-import type { WeatherData, AirQualityLevel } from '../types'
+import type { WeatherData } from '../types'
+import { AIR_QUALITY_COLOR } from '../constants/colors'
 
 const SKY_ICON: Record<string, string> = {
   '맑음': '☀️',
@@ -9,20 +10,6 @@ const SKY_ICON: Record<string, string> = {
   '눈': '❄️',
   '비/눈': '🌨️',
   '소나기': '⛈️',
-}
-
-const AIR_QUALITY_COLOR: Record<AirQualityLevel, string> = {
-  '좋음': '#4caf50',
-  '보통': '#ffc107',
-  '나쁨': '#ff9800',
-  '매우나쁨': '#f44336',
-}
-
-const AIR_QUALITY_LABEL: Record<AirQualityLevel, string> = {
-  '좋음': '좋음',
-  '보통': '보통',
-  '나쁨': '나쁨',
-  '매우나쁨': '매우나쁨',
 }
 
 function getWeatherIcon(skyStatus: string): string {
@@ -81,7 +68,6 @@ export function AirQualityBadge({ weather }: AirQualityBadgeProps) {
 
   const level = weather.pm25Idx
   const color = AIR_QUALITY_COLOR[level] ?? '#4caf50'
-  const label = AIR_QUALITY_LABEL[level] ?? level
 
   return (
     <div
@@ -106,7 +92,7 @@ export function AirQualityBadge({ weather }: AirQualityBadgeProps) {
         className="text-xs font-semibold"
         style={{ color }}
       >
-        {label}
+        {level}
       </span>
     </div>
   )

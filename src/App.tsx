@@ -6,7 +6,7 @@ import WeatherOverlay from './components/WeatherOverlay'
 import CharacterSystem from './components/CharacterSystem'
 import { HotspotLayer } from './components/HotspotMarker'
 import { useSeoulData } from './hooks/useSeoulData'
-import { LOCATIONS } from './services/LocationRegistry'
+import { LOCATIONS, LOCATION_MAP } from './services/LocationRegistry'
 
 const API_KEY = import.meta.env.VITE_SEOUL_API_KEY ?? ''
 
@@ -25,7 +25,7 @@ export default function App() {
   // Get selected area data
   const selectedAreaData = useMemo(() => {
     if (!selectedCode) return null
-    const loc = LOCATIONS.find(l => l.code === selectedCode)
+    const loc = LOCATION_MAP.get(selectedCode)
     if (!loc) return null
     return data.get(loc.name) ?? null
   }, [selectedCode, data])

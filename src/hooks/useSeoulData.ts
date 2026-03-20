@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { SeoulApiService } from '../services/SeoulApiService'
-import { LOCATIONS } from '../services/LocationRegistry'
+import { LOCATIONS, LOCATION_BY_NAME } from '../services/LocationRegistry'
 import type { AreaData, CongestionLevel } from '../types'
 
 const AREA_NAMES = LOCATIONS.map(l => l.name)
@@ -31,7 +31,7 @@ export function useSeoulData(apiKey: string) {
     for (const [name, areaData] of data.entries()) {
       if (areaData.population?.areaCongestLvl) {
         // Map by location name → find code
-        const loc = LOCATIONS.find(l => l.name === name)
+        const loc = LOCATION_BY_NAME.get(name)
         if (loc) {
           congestionMap.set(loc.code, areaData.population.areaCongestLvl)
         }
@@ -76,10 +76,7 @@ export function useSeoulData(apiKey: string) {
     fetchAll()
 
     const timer = setInterval(fetchAll, REFRESH_INTERVAL)
-    return () => {
-      clearInterval(timer)
-      serviceRef.current?.stopAutoRefresh()
-    }
+    return () => clearInterval(timer)
   }, [apiKey, fetchAll])
 
   const refresh = useCallback(() => {
