@@ -21,6 +21,7 @@ interface SeoulMapProps {
 
 export default function SeoulMap({ children }: SeoulMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const innerRef = useRef<HTMLDivElement>(null)
   const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: INITIAL_SCALE })
 
   // Pan state
@@ -29,6 +30,7 @@ export default function SeoulMap({ children }: SeoulMapProps) {
 
   // Pinch state
   const lastPinchDist = useRef<number | null>(null)
+  const isPinching = useRef(false)
 
   const clampScale = (s: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, s))
 
@@ -68,6 +70,9 @@ export default function SeoulMap({ children }: SeoulMapProps) {
   const onTouchEnd = useCallback(() => {
     isPanning.current = false
     lastPinchDist.current = null
+    isPinching.current = false
+    // Re-enable smooth transition after pinch ends
+    if (innerRef.current) innerRef.current.style.transition = 'transform 0.15s ease-out'
   }, [])
 
   // Native non-passive wheel and touchmove handlers (React registers these as passive by default)
@@ -78,7 +83,17 @@ export default function SeoulMap({ children }: SeoulMapProps) {
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault()
       const factor = e.deltaY < 0 ? 1.1 : 0.9
-      setTransform(t => ({ ...t, scale: clampScale(t.scale * factor) }))
+      // Smooth transition for wheel zoom
+      if (innerRef.current) innerRef.current.style.transition = 'transform 0.15s ease-out'
+      const rect = el.getBoundingClientRect()
+      const cx = e.clientX - rect.left
+      const cy = e.clientY - rect.top
+      // Zoom toward cursor: keep the map point under the cursor fixed
+      setTransform(t => {
+        const newScale = clampScale(t.scale * factor)
+        const ratio = newScale / t.scale
+        return { x: cx - (cx - t.x) * ratio, y: cy - (cy - t.y) * ratio, scale: newScale }
+      })
     }
 
     const handleTouchMove = (e: TouchEvent) => {
@@ -89,6 +104,11 @@ export default function SeoulMap({ children }: SeoulMapProps) {
         lastPoint.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
         setTransform(t => ({ ...t, x: t.x + dx, y: t.y + dy }))
       } else if (e.touches.length === 2 && lastPinchDist.current !== null) {
+        // Disable transition during pinch to avoid lag
+        if (!isPinching.current) {
+          isPinching.current = true
+          if (innerRef.current) innerRef.current.style.transition = 'none'
+        }
         const dx = e.touches[0].clientX - e.touches[1].clientX
         const dy = e.touches[0].clientY - e.touches[1].clientY
         const dist = Math.hypot(dx, dy)
@@ -118,9 +138,11 @@ export default function SeoulMap({ children }: SeoulMapProps) {
       onTouchEnd={onTouchEnd}
     >
       <div
+        ref={innerRef}
         style={{
           transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
-          transformOrigin: 'center center',
+          transformOrigin: '0 0',
+          transition: 'transform 0.15s ease-out',
           width: '100%',
           height: '100%',
           willChange: 'transform',
