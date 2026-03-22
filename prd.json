@@ -39,7 +39,7 @@
       "description": "Create a custom MapLibre style JSON file (src/assets/map-style.json) that transforms the default OSM tiles into a Snap Map-inspired pastel look. Style specifications: (1) Background: pale warm gray #f5f3ef. (2) Roads: white #ffffff with very subtle light gray casing #eee for major roads, thinner for minor. Highway labels hidden or very subtle. (3) Buildings: very light beige/lavender #f0eee8 fill, no stroke. Enable 3D building extrusions at zoom >= 14 with subtle height. (4) Parks/green areas: soft mint #d4edda. (5) Water (Han River, streams): soft sky blue #c5e3f6. (6) Land use areas: very subtle differentiation. (7) Labels: muted gray #999, only show major area names at low zoom, more detail at higher zoom. Use a clean sans-serif font. (8) Overall feel: clean, bright, minimal, pastel - like Snap Map. Import and use this style in MapView component.",
       "test_command": "npm test",
       "acceptance": "Map displays with custom pastel colors. Roads are white, buildings light beige, parks mint green, water sky blue. Overall feel matches Snap Map aesthetic. 3D buildings appear when zoomed in past level 14.",
-      "passes": false
+      "passes": true
     },
     {
       "id": "V4-3",

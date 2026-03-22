@@ -7,6 +7,10 @@ Started: Fri Mar 20 17:28:59 KST 2026
 - maplibre-gl mock in vitest: use `class` syntax (not arrow function) in `vi.fn().mockImplementation`; return `{ default: { Map: MockClass } }`
 - maplibre-gl CSS: `import 'maplibre-gl/dist/maplibre-gl.css'` — mock in tests with `vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}))`
 - CharacterSystem and HotspotLayer temporarily removed from App.tsx — will be re-added in V4-3/V4-4 with geo-based coordinates
+- Custom map style: `src/assets/map-style.json` uses OpenFreeMap vector tiles (OpenMapTiles schema). Import as JSON and pass as `style: mapStyle as any` to maplibregl.Map
+- OpenFreeMap tile source: `{ type: "vector", url: "https://tiles.openfreemap.org/planet" }`, glyphs from `https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf`
+- Key OpenMapTiles source-layer names: landuse, landcover, water, waterway, transportation, building, place, water_name
+- 3D buildings: use `fill-extrusion` layer type with `render_height`/`height` property for extrusion height
 
 ## 2026-03-22 - V4-1
 - Installed maplibre-gl v5.21.0
@@ -20,4 +24,16 @@ Started: Fri Mar 20 17:28:59 KST 2026
   - vitest mock for maplibre-gl must use `class` syntax for Map constructor, not arrow function
   - maplibre-gl CSS import also needs to be mocked in test files
   - App.tsx temporarily has no hotspot markers or character system — these come in V4-3/V4-4
+---
+
+## 2026-03-23 - V4-2
+- Created src/assets/map-style.json — custom pastel MapLibre style using OpenFreeMap vector tiles
+- Style covers: background (#f5f3ef), landuse parks (#d4edda), water (#c5e3f6), roads (white/#fafafa with #eee casing), buildings (#f0eee8 fill + 3D extrusion at zoom 14+), muted gray labels
+- Updated MapView.tsx to import and use the custom style JSON (replacing demotiles URL)
+- All 69 tests pass, build succeeds
+- **Learnings for future iterations:**
+  - OpenFreeMap uses OpenMapTiles schema; source-layer names are: landuse, landcover, water, waterway, transportation, building, place, water_name
+  - Import JSON style as `import mapStyle from '../assets/map-style.json'` then pass as `style: mapStyle as any`
+  - 3D buildings use `fill-extrusion` type; `render_height` is the OpenMapTiles property for height
+  - JSON assets in vite are automatically supported; no extra config needed
 ---
