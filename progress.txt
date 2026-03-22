@@ -83,3 +83,23 @@ Started: Fri Mar 20 17:28:59 KST 2026
   - River top edge now at y≈340-362, bottom at y≈385-400 (use these coords for bridges/landmarks)
   - Wave highlight: offset top edge path by +5y with lighter stroke opacity 0.5
 ---
+
+## 2026-03-22 - V3-6
+- Added 5 park patches as green ellipses (#b5d89a, opacity 0.65): 서울숲, 올림픽공원, 여의도공원, 월드컵공원, 보라매공원
+- Added 74 trees total as circle+stem (3.5px radius, 3 green shades #5a9050/#6aaa60/#7fc468)
+  - 서울숲 cluster: 15 trees dense at (436-468, 208-228)
+  - 올림픽공원 cluster: 10 trees at (536-560, 404-418)
+  - 여의도공원 cluster: 8 trees at (226-250, 322-336)
+  - 월드컵공원 cluster: 8 trees at (176-198, 184-200)
+  - 보라매공원 cluster: 9 trees at (284-312, 446-464)
+  - Scattered: 24 trees along Cheonggyecheon, Jongno, Jungnang, Gangnam, Gangdong, etc.
+- Added 8 spring flower dots (pink, r=1.8) in 서울숲 and 올림픽공원 areas
+- Added PARK_PATCHES, TREES, TREE_SHADES constants above DISTRICTS
+- Files changed: src/components/SeoulMap.tsx, prd.json
+- **Learnings for future iterations:**
+  - Trees rendered as: `<line y1={cy+3.5} y2={cy+9} stroke="#7a5030">` + `<circle r={3.5} fill={shade}>` pattern
+  - Park patches: `<ellipse fill="#b5d89a" opacity="0.65">` sits nicely over district fill
+  - 여의도 park must stay at y<340 (river starts ~y=340); Yeouido landmarks at y=330-348
+  - `as const` on TREE_SHADES array allows indexed access without type error
+  - Flower dots: `([] as [number,number,string][]).map(...)` for mixed tuple type in JSX
+---

@@ -83,7 +83,7 @@
       "description": "Scatter environmental SVG elements across the map for visual richness: (1) Trees: 60-80 small tree icons scattered across the map, concentrated in park areas and along rivers. Each tree is a simple green circle (3-5px radius) on a thin brown stem (1px line). Use 2-3 shades of green for variety. (2) Park areas: Fill known park regions with slightly darker green (#b5d89a) patches: 올림픽공원 area, 서울숲 (near Seongdong), 여의도공원, 월드컵공원, 보라매공원. (3) Seoul Forest (서울숲): Dense cluster of 15-20 trees in Seongdong-gu area. (4) Small flower/bush icons (tiny colored dots) scattered in park areas for spring feel. (5) Road patterns: Add a few more subtle road lines in cream/light color to fill empty district interiors. Trees should be rendered above districts but below landmarks and hotspot markers. Create a reusable Tree SVG component that takes (x, y, size, shade) props.",
       "test_command": "npm test",
       "acceptance": "60+ trees scattered across the map. Park areas have denser tree clusters and darker green fills. Map feels lush and alive rather than empty.",
-      "passes": false
+      "passes": true
     },
     {
       "id": "V3-7",
