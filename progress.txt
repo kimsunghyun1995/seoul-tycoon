@@ -78,3 +78,16 @@ Started: Fri Mar 20 17:28:59 KST 2026
   - Characters use screen-space offsets from projected home; no special map-move handling needed — re-projecting each frame naturally follows map pan/zoom
   - `canvas.style.width = '100%'` (not fixed px) allows canvas to fill parent container for resize support
 ---
+
+## 2026-03-23 - V4-5
+- WeatherOverlay was already substantially implemented in prior iterations
+- Key additions for V4-5 compliance:
+  - Exported getDayPeriod helper from WeatherOverlay.tsx
+  - Applied CSS filter brightness(0.7) to map container div in App.tsx at night
+- All existing features confirmed: sky tint (day/sunset/night/dawn), 160 rain streak particles (opacity 0.6+), 80 wobbling snowflakes, 40 dust motes, sun glow with rotating rays (CSS animation), drifting clouds, dust amber haze, pointer-events:none on all overlays
+- All 68 tests pass
+- **Learnings for future iterations:**
+  - WeatherOverlay is self-contained; getDayPeriod and getSkyState are utility exports
+  - Night-mode map dimming lives in App.tsx (filter on map container div), not inside WeatherOverlay
+  - dayPeriod is computed from new Date().getHours() inline — no state needed in App.tsx
+---

@@ -63,7 +63,7 @@
       "description": "Rebuild weather effects to work as an overlay on the MapLibre map. (1) Sky/tint layer: semi-transparent div overlay on top of map that applies color tint based on weather state and time of day. Day/night cycle: day(07-17) no tint, sunset(17-19) warm orange tint, night(19-05) dark navy overlay with stars + moon, dawn(05-07) soft pink. (2) Rain: canvas overlay with 150+ rain streak particles, clearly visible (opacity 0.6+). (3) Snow: 80+ wobbling snowflakes on canvas. (4) Dust: amber haze overlay. (5) Clear: sun glow element with rotating rays (CSS animation). Clouds drifting. (6) All weather overlays use pointer-events:none so map interaction works through them. (7) Night mode: also apply a CSS filter (brightness 0.7) on the map container to dim the map at night.",
       "test_command": "npm test",
       "acceptance": "Weather effects clearly visible over the map. Rain/snow particles render. Day/night tint changes based on current time. Map remains interactive through overlays.",
-      "passes": false
+      "passes": true
     },
     {
       "id": "V4-6",
