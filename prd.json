@@ -71,7 +71,7 @@
       "description": "Update App.tsx to wire everything together with the new MapLibre-based architecture. (1) MapView renders the map and exposes a ref to the maplibre.Map instance. (2) CharacterSystem receives map ref and renders PixiJS overlay. (3) HotspotMarkers are managed as MapLibre layers inside MapView. (4) WeatherOverlay renders on top of everything. (5) TopBar and BottomSheet remain as-is, receiving data from useSeoulData. (6) On hotspot click (from MapLibre layer), update selectedCode state → BottomSheet shows details. (7) Loading overlay and error banner work as before. (8) Ensure all data flow works: API fetch → populate markers + characters → auto-refresh every 5 min.",
       "test_command": "npm run build && npm test",
       "acceptance": "Full app works end-to-end: map renders, hotspots colored by congestion, characters walk around, weather animates, clicking hotspot shows bottom sheet with details, data refreshes automatically.",
-      "passes": false
+      "passes": true
     },
     {
       "id": "V4-7",

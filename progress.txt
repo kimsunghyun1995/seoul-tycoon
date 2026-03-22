@@ -91,3 +91,15 @@ Started: Fri Mar 20 17:28:59 KST 2026
   - Night-mode map dimming lives in App.tsx (filter on map container div), not inside WeatherOverlay
   - dayPeriod is computed from new Date().getHours() inline — no state needed in App.tsx
 ---
+
+## 2026-03-23 - V4-6
+- Fixed TypeScript naming conflict: `Map` from maplibre-gl shadowed the native JS `Map`
+  - App.tsx: `import type { Map as MaplibreMap } from 'maplibre-gl'`
+  - HotspotMarker.tsx: same rename, plus `globalThis.Map<string, CongestionLevel>` for native Map props
+- Fixed HotspotMarker.test.tsx: changed `([event, layerId]: [string, string])` to `(call: unknown[])` in mock.calls.find() to avoid TypeScript overload mismatch
+- Build succeeds, all 68 tests pass
+- **Learnings for future iterations:**
+  - MapLibre's `Map` type conflicts with native JS `Map` — always alias: `import type { Map as MaplibreMap }`
+  - For native Map in types/params, use `globalThis.Map<K, V>` to disambiguate when maplibre Map is also in scope
+  - `vi.fn().mock.calls.find()` with destructured tuple params needs `(call: unknown[])` type, not destructured tuple, to avoid TS overload errors
+---
