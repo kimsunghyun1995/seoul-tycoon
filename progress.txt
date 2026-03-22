@@ -1,3 +1,42 @@
 # Ralph Progress Log
 Started: Fri Mar 20 17:28:59 KST 2026
 ---
+
+## Codebase Patterns
+- CharacterSystem uses PixiJS 8 with a ticker loop; LOD switching uses DETAIL_ZOOM_THRESHOLD to switch between dot and full figure rendering
+- Tests mock pixi.js entirely (no WebGL in jsdom), so rendering logic changes don't need separate test coverage beyond existing canvas/render tests
+- All visual dimension changes in CharacterSystem are in createCharacterGraphics, drawLegs, and the dot fallback block in the ticker loop
+- SeoulMap.tsx contains SeoulSVG (inner component), DISTRICTS array, DISTRICT_LABELS, HAN_RIVER_PATH, MAJOR_ROADS, GYEONGGI_PATH constants
+- SVG tests only check for element presence/text content, not colors - color/style changes are safe to make without breaking tests
+
+---
+
+## 2026-03-20 - V3-1
+- Reduced head radius: 5px → 1.5px
+- Reduced body: 8x9px roundRect → 2x3px roundRect
+- Reduced leg swing: ×3 → ×1, stroke width: 2 → 0.8
+- Reduced dot radius (low-zoom fallback): 4px → 2px
+- Raised DETAIL_ZOOM_THRESHOLD: 0.9 → 2.0 (dots at default zoom, figures only at 2x+)
+- Reduced scale variance: 0.9–1.3 → 0.8–1.0
+- Files changed: src/components/CharacterSystem.tsx
+- **Learnings for future iterations:**
+  - createCharacterGraphics and drawLegs must stay in sync (both draw head+body)
+  - DETAIL_ZOOM_THRESHOLD controls the dot vs figure LOD switch; raising it makes more zoom levels show dots
+  - spawnCharacter's container.scale.set() controls per-character size variance
+---
+
+## 2026-03-22 - V3-2
+- Changed district fills from green tones (#c8e6c9, #dcedc8 etc) to warm pink/beige tones (#eac9c4 ~ #f7e2de)
+- Changed district borders: stroke="#b0d8a0" strokeWidth=1.5 → stroke="white" strokeWidth=3 strokeLinejoin="round"
+- Removed greenish skyGrad linearGradient; background rect now uses flat #e8e6df (muted sage cream)
+- Updated Gyeonggi-do path: fill #c8c8b8 → #dddad0, stroke #aaaaa0 → #c8c4b8, opacity 0.55 → 0.8
+- Han River: removed riverGrad reference in fill, now uses solid #8ec5e8 fill with #6aadd4 stroke
+- District labels: fill color #4a7c59 (green) → #8b5a52 (warm brown)
+- Gyeonggi-do labels: fill #787870 → #a09888, opacity 0.7 → 0.8
+- Major roads: stroke #c8e0b8 (green-tinted) → #e8d8c8 (warm cream)
+- Files changed: src/components/SeoulMap.tsx
+- **Learnings for future iterations:**
+  - White strokes (strokeWidth 3) on pink districts create crisp illustrated map look
+  - District color variation range: #f7e2de (lightest north) → #eac9c4 (most saturated Gangnam)
+  - Han River solid fill (#8ec5e8) looks cleaner than gradient for illustrated style
+---
