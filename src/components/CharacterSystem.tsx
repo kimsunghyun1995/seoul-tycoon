@@ -1,10 +1,10 @@
-import { useEffect, useRef, useCallback, type RefObject } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { Application, Graphics, Container, Ticker } from 'pixi.js'
 import type { CongestionLevel, Location } from '../types'
+import type { Map as MaplibreMap } from 'maplibre-gl'
 
 const CHARS_PER_100_PEOPLE = 1
 const MAX_CHARS_PER_HOTSPOT = 500
-// Fallback counts when population data is unavailable
 const CONGESTION_FALLBACK_COUNT: Record<CongestionLevel, number> = {
   '여유': 3,
   '보통': 8,
@@ -21,6 +21,8 @@ function populationToCharCount(population: number | undefined, congestion: Conge
 
 const BASE_HOTSPOT_RADIUS = 30
 const WALK_SPEED = 0.3
+// At MapLibre zoom >= 14, render full character detail; below: dots only
+const DETAIL_ZOOM_THRESHOLD = 14
 
 function getHotspotRadius(charCount: number): number {
   return Math.max(BASE_HOTSPOT_RADIUS, Math.sqrt(charCount) * 3)
@@ -40,15 +42,14 @@ const BODY_COLORS = [
 interface Character {
   container: Container
   graphics: Graphics
-  x: number
-  y: number
-  vx: number
-  vy: number
-  phase: number // walk animation phase
-  targetX: number
-  targetY: number
-  homeX: number
-  homeY: number
+  homeLng: number
+  homeLat: number
+  // current screen offset from projected home position
+  offsetX: number
+  offsetY: number
+  targetOffsetX: number
+  targetOffsetY: number
+  phase: number
   alpha: number
   state: 'spawning' | 'walking' | 'despawning'
   bodyColor: number
@@ -56,71 +57,54 @@ interface Character {
 
 function createCharacterGraphics(bodyColor: number): Graphics {
   const g = new Graphics()
-
-  // Head (round) - 1.5px radius
   g.circle(0, -4, 1.5)
   g.fill({ color: 0xffe4c4 })
-
-  // Body - 2x3px
   g.roundRect(-1, -2.5, 2, 3, 0.5)
   g.fill({ color: bodyColor })
-
   return g
 }
 
 function drawLegs(g: Graphics, phase: number, bodyColor: number): void {
   g.clear()
-
-  // Head
   g.circle(0, -4, 1.5)
   g.fill({ color: 0xffe4c4 })
-
-  // Body
   g.roundRect(-1, -2.5, 2, 3, 0.5)
   g.fill({ color: bodyColor })
-
-  // Animated legs
   const legSwing = Math.sin(phase) * 1
-  // Left leg
   g.moveTo(-0.5, 0.5)
   g.lineTo(-0.5 + legSwing, 2.5)
   g.stroke({ color: bodyColor, width: 0.8 })
-  // Right leg
   g.moveTo(0.5, 0.5)
   g.lineTo(0.5 - legSwing, 2.5)
   g.stroke({ color: bodyColor, width: 0.8 })
 }
 
-function randomInRadius(cx: number, cy: number, r: number): { x: number; y: number } {
+function randomOffset(r: number): { x: number; y: number } {
   const angle = Math.random() * Math.PI * 2
   const dist = Math.random() * r
-  return { x: cx + Math.cos(angle) * dist, y: cy + Math.sin(angle) * dist }
+  return { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist }
 }
 
-function spawnCharacter(homeX: number, homeY: number, bodyColor: number, radius: number): Character {
+function spawnCharacter(homeLng: number, homeLat: number, bodyColor: number, radius: number): Character {
   const container = new Container()
   const graphics = createCharacterGraphics(bodyColor)
   container.addChild(graphics)
-  const pos = randomInRadius(homeX, homeY, radius * 0.7)
-  container.x = pos.x
-  container.y = pos.y
   container.alpha = 0
   container.scale.set(0.8 + Math.random() * 0.2)
 
-  const target = randomInRadius(homeX, homeY, radius)
+  const startOffset = randomOffset(radius * 0.7)
+  const targetOffset = randomOffset(radius)
 
   return {
     container,
     graphics,
-    x: pos.x,
-    y: pos.y,
-    vx: 0,
-    vy: 0,
+    homeLng,
+    homeLat,
+    offsetX: startOffset.x,
+    offsetY: startOffset.y,
+    targetOffsetX: targetOffset.x,
+    targetOffsetY: targetOffset.y,
     phase: Math.random() * Math.PI * 2,
-    targetX: target.x,
-    targetY: target.y,
-    homeX,
-    homeY,
     alpha: 0,
     state: 'spawning',
     bodyColor,
@@ -135,24 +119,29 @@ interface HotspotState {
   radius: number
 }
 
-const DETAIL_ZOOM_THRESHOLD = 2.0  // below this: render as dots
-const SPAWN_THROTTLE_FRAMES = 3    // only spawn/despawn every N frames
+const SPAWN_THROTTLE_FRAMES = 3
 
 export interface CharacterSystemProps {
+  map: MaplibreMap | null
   locations: Location[]
   congestionMap: Map<string, CongestionLevel>
   populationMap?: Map<string, number>
-  zoomScaleRef?: RefObject<number>
 }
 
-export default function CharacterSystem({ locations, congestionMap, populationMap, zoomScaleRef }: CharacterSystemProps) {
+export default function CharacterSystem({ map, locations, congestionMap, populationMap }: CharacterSystemProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const appRef = useRef<Application | null>(null)
   const hotspotsRef = useRef<Map<string, HotspotState>>(new Map())
   const stageContainerRef = useRef<Container | null>(null)
   const frameCountRef = useRef(0)
+  const mapRef = useRef<MaplibreMap | null>(null)
 
-  const initPixi = useCallback(async () => {
+  // Keep mapRef in sync with the map prop (no re-render needed)
+  useEffect(() => {
+    mapRef.current = map
+  }, [map])
+
+  const initPixi = useCallback(async (width: number, height: number) => {
     if (!canvasRef.current) return
     if (appRef.current) return
 
@@ -160,8 +149,8 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
     await app.init({
       canvas: canvasRef.current,
       backgroundAlpha: 0,
-      width: 800,
-      height: 700,
+      width,
+      height,
       antialias: true,
       resolution: window.devicePixelRatio || 1,
       autoDensity: true,
@@ -173,36 +162,50 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
     stageContainerRef.current = stageContainer
 
     app.ticker.add((ticker: Ticker) => {
+      const m = mapRef.current
+      if (!m) return
+
       const dt = ticker.deltaTime
       const hotspots = hotspotsRef.current
       const frame = ++frameCountRef.current
       const doSpawnDespawn = frame % SPAWN_THROTTLE_FRAMES === 0
-      const scale = zoomScaleRef?.current ?? 1
-      const showDetail = scale >= DETAIL_ZOOM_THRESHOLD
+      const zoom = m.getZoom()
+      const showDetail = zoom >= DETAIL_ZOOM_THRESHOLD
+
+      const canvasWidth = canvasRef.current?.clientWidth ?? width
+      const canvasHeight = canvasRef.current?.clientHeight ?? height
 
       hotspots.forEach(state => {
-        const { characters, targetCount } = state
+        const { characters, targetCount, location } = state
 
-        // Throttle spawn/despawn to avoid frame drops during data refresh
         if (doSpawnDespawn) {
-          // Spawn one character per frame batch (not all at once)
           if (characters.length < targetCount) {
             const colorIdx = characters.length % BODY_COLORS.length
-            const char = spawnCharacter(state.location.x, state.location.y, BODY_COLORS[colorIdx], state.radius)
+            const char = spawnCharacter(location.lng, location.lat, BODY_COLORS[colorIdx], state.radius)
             stageContainer.addChild(char.container)
             characters.push(char)
           }
-
-          // Mark one excess character for despawning
           if (characters.length > targetCount) {
             const char = characters[characters.length - 1]
             if (char.state === 'walking') char.state = 'despawning'
           }
         }
 
-        // Update each character
+        // Project home lng/lat to screen coords each frame (handles pan/zoom)
+        const projected = m.project([location.lng, location.lat])
+
         for (let i = characters.length - 1; i >= 0; i--) {
           const char = characters[i]
+
+          const screenX = projected.x + char.offsetX
+          const screenY = projected.y + char.offsetY
+
+          // Viewport culling: hide characters outside visible area
+          const inViewport = screenX >= -20 && screenX <= canvasWidth + 20 &&
+                             screenY >= -20 && screenY <= canvasHeight + 20
+          char.container.visible = inViewport
+
+          if (!inViewport) continue
 
           if (char.state === 'spawning') {
             char.alpha = Math.min(1, char.alpha + 0.05 * dt)
@@ -220,26 +223,29 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
           }
 
           if (char.state === 'walking' || char.state === 'spawning') {
-            // Move towards target
-            const dx = char.targetX - char.container.x
-            const dy = char.targetY - char.container.y
+            const dx = char.targetOffsetX - char.offsetX
+            const dy = char.targetOffsetY - char.offsetY
             const dist = Math.hypot(dx, dy)
 
             if (dist < 2) {
-              const target = randomInRadius(char.homeX, char.homeY, state.radius)
-              char.targetX = target.x
-              char.targetY = target.y
+              const target = randomOffset(state.radius)
+              char.targetOffsetX = target.x
+              char.targetOffsetY = target.y
             } else {
-              char.container.x += (dx / dist) * WALK_SPEED * dt
-              char.container.y += (dy / dist) * WALK_SPEED * dt
+              char.offsetX += (dx / dist) * WALK_SPEED * dt
+              char.offsetY += (dy / dist) * WALK_SPEED * dt
             }
+          }
 
-            // LOD: full detail (legs + body) when zoomed in, dot only when zoomed out
+          // Always update screen position (including despawning chars)
+          char.container.x = projected.x + char.offsetX
+          char.container.y = projected.y + char.offsetY
+
+          if (char.state === 'walking' || char.state === 'spawning') {
             if (showDetail) {
               char.phase += 0.15 * dt
               drawLegs(char.graphics, char.phase, char.bodyColor)
             } else {
-              // Simple dot representation for performance at low zoom
               char.graphics.clear()
               char.graphics.circle(0, -2, 2)
               char.graphics.fill({ color: char.bodyColor })
@@ -251,13 +257,33 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
   }, [])
 
   useEffect(() => {
-    initPixi()
+    const container = canvasRef.current?.parentElement
+    const width = container?.clientWidth ?? 800
+    const height = container?.clientHeight ?? 700
+    initPixi(width, height)
     return () => {
       appRef.current?.destroy(false)
       appRef.current = null
     }
   }, [initPixi])
 
+  // Resize PixiJS renderer when MapLibre map resizes
+  useEffect(() => {
+    if (!map) return
+    const handleResize = () => {
+      const app = appRef.current
+      if (!app) return
+      const container = canvasRef.current?.parentElement
+      if (!container) return
+      app.renderer.resize(container.clientWidth, container.clientHeight)
+    }
+    map.on('resize', handleResize)
+    return () => {
+      map.off('resize', handleResize)
+    }
+  }, [map])
+
+  // Update hotspot data when locations/congestion/population changes
   useEffect(() => {
     const hotspots = hotspotsRef.current
 
@@ -272,6 +298,7 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
         existing.congestion = congestion
         existing.targetCount = targetCount
         existing.radius = radius
+        existing.location = loc
       } else {
         hotspots.set(loc.code, {
           location: loc,
@@ -292,8 +319,8 @@ export default function CharacterSystem({ locations, congestionMap, populationMa
         position: 'absolute',
         top: 0,
         left: 0,
-        width: 800,
-        height: 700,
+        width: '100%',
+        height: '100%',
         pointerEvents: 'none',
       }}
     />

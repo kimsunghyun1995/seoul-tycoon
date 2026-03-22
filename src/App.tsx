@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import MapView from './components/MapView'
 import { HotspotLayer } from './components/HotspotMarker'
+import CharacterSystem from './components/CharacterSystem'
 import TopBar from './components/TopBar'
 import BottomSheet from './components/BottomSheet'
 import WeatherOverlay from './components/WeatherOverlay'
@@ -37,6 +38,19 @@ export default function App() {
     return map
   }, [data])
 
+  // Build population map (code → estimated population) for character counts
+  const populationMap = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const loc of LOCATIONS) {
+      const areaData = data.get(loc.name)
+      if (areaData?.population) {
+        const avg = (areaData.population.areaPopMin + areaData.population.areaPopMax) / 2
+        map.set(loc.code, avg)
+      }
+    }
+    return map
+  }, [data])
+
   // Get selected area data
   const selectedAreaData = useMemo(() => {
     if (!selectedCode) return null
@@ -58,6 +72,12 @@ export default function App() {
           congestionMap={congestionMap}
           selectedCode={selectedCode}
           onSelect={setSelectedCode}
+        />
+        <CharacterSystem
+          map={mapInstance}
+          locations={LOCATIONS}
+          congestionMap={congestionMap}
+          populationMap={populationMap}
         />
       </div>
 

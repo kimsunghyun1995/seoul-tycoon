@@ -6,14 +6,47 @@ import App from '../App'
 vi.mock('maplibre-gl', () => {
   class MockMap {
     on() {}
+    off() {}
     remove() {}
     project() { return { x: 0, y: 0 } }
+    getZoom() { return 11 }
     flyTo() {}
   }
   return { default: { Map: MockMap } }
 })
 
 vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}))
+
+// Mock PixiJS - no WebGL in jsdom
+vi.mock('pixi.js', () => {
+  class MockApplication {
+    stage = { addChild: vi.fn() }
+    ticker = { add: vi.fn() }
+    init = vi.fn().mockResolvedValue(undefined)
+    destroy = vi.fn()
+    renderer = { resize: vi.fn() }
+  }
+  class MockGraphics {
+    circle() { return this }
+    fill() { return this }
+    roundRect() { return this }
+    moveTo() { return this }
+    lineTo() { return this }
+    stroke() { return this }
+    clear() { return this }
+  }
+  class MockContainer {
+    addChild = vi.fn()
+    removeChild = vi.fn()
+    alpha = 1
+    x = 0
+    y = 0
+    scale = { set: vi.fn() }
+    destroy = vi.fn()
+  }
+  class MockTicker {}
+  return { Application: MockApplication, Graphics: MockGraphics, Container: MockContainer, Ticker: MockTicker }
+})
 
 describe('App', () => {
   beforeEach(() => {

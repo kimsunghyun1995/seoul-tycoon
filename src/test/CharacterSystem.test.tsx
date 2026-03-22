@@ -42,9 +42,17 @@ vi.mock('pixi.js', () => {
   }
 })
 
+// Minimal mock MapLibre map instance
+const mockMap = {
+  project: vi.fn().mockReturnValue({ x: 300, y: 200 }),
+  getZoom: vi.fn().mockReturnValue(11),
+  on: vi.fn(),
+  off: vi.fn(),
+}
+
 const mockLocations: Location[] = [
-  { code: 'POI001', name: '경복궁', x: 300, y: 200 },
-  { code: 'POI035', name: '강남역', x: 450, y: 500 },
+  { code: 'POI001', name: '경복궁', lng: 126.977, lat: 37.579 },
+  { code: 'POI035', name: '강남역', lng: 127.028, lat: 37.498 },
 ]
 
 describe('CharacterSystem', () => {
@@ -55,6 +63,7 @@ describe('CharacterSystem', () => {
   it('renders a canvas element', () => {
     const { getByTestId } = render(
       <CharacterSystem
+        map={mockMap as any}
         locations={mockLocations}
         congestionMap={new Map()}
       />
@@ -62,17 +71,18 @@ describe('CharacterSystem', () => {
     expect(getByTestId('character-canvas')).toBeInTheDocument()
   })
 
-  it('canvas is positioned absolute and fills parent', () => {
+  it('canvas is positioned absolute and fills parent with pointer-events none', () => {
     const { getByTestId } = render(
       <CharacterSystem
+        map={mockMap as any}
         locations={mockLocations}
         congestionMap={new Map()}
       />
     )
     const canvas = getByTestId('character-canvas')
     expect(canvas.style.position).toBe('absolute')
-    expect(canvas.style.width).toBe('800px')
-    expect(canvas.style.height).toBe('700px')
+    expect(canvas.style.width).toBe('100%')
+    expect(canvas.style.height).toBe('100%')
     expect(canvas.style.pointerEvents).toBe('none')
   })
 
@@ -83,8 +93,20 @@ describe('CharacterSystem', () => {
     ])
     const { getByTestId } = render(
       <CharacterSystem
+        map={mockMap as any}
         locations={mockLocations}
         congestionMap={congestionMap}
+      />
+    )
+    expect(getByTestId('character-canvas')).toBeInTheDocument()
+  })
+
+  it('renders without a map (map=null)', () => {
+    const { getByTestId } = render(
+      <CharacterSystem
+        map={null}
+        locations={mockLocations}
+        congestionMap={new Map()}
       />
     )
     expect(getByTestId('character-canvas')).toBeInTheDocument()
