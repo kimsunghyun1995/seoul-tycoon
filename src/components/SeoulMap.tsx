@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { useRef, useCallback, useEffect, useLayoutEffect, type ReactNode } from 'react'
 
 interface Point {
   x: number
@@ -12,6 +12,7 @@ interface Transform {
 }
 
 const MAX_SCALE = 6
+const LERP_FACTOR = 0.18
 
 const MAP_WIDTH = 800
 const MAP_HEIGHT = 700
@@ -25,7 +26,12 @@ interface SeoulMapProps {
 export default function SeoulMap({ children, overlay, scaleRef }: SeoulMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
-  const [transform, setTransform] = useState<Transform>({ x: 0, y: 0, scale: 1 })
+
+  // RAF-based smooth transform: target is the desired state, current lerps toward it
+  const targetRef = useRef<Transform>({ x: 0, y: 0, scale: 1 })
+  const currentRef = useRef<Transform>({ x: 0, y: 0, scale: 1 })
+  const rafRef = useRef<number | null>(null)
+
   const minScaleRef = useRef(0.5)
   const defaultTransformRef = useRef<Transform>({ x: 0, y: 0, scale: 1 })
 
@@ -39,29 +45,91 @@ export default function SeoulMap({ children, overlay, scaleRef }: SeoulMapProps)
 
   const clampScale = useCallback((s: number) => Math.min(MAX_SCALE, Math.max(minScaleRef.current, s)), [])
 
+  // Apply transform to DOM directly (bypasses React re-renders for animation frames)
+  const applyTransform = useCallback((t: Transform) => {
+    if (innerRef.current) {
+      innerRef.current.style.transform = `translate(${t.x}px, ${t.y}px) scale(${t.scale})`
+    }
+    if (scaleRef) scaleRef.current = t.scale
+  }, [scaleRef])
+
+  // RAF animation tick: lerp currentRef toward targetRef each frame
+  const tick = useCallback(() => {
+    const cur = currentRef.current
+    const tgt = targetRef.current
+    const nx = cur.x + (tgt.x - cur.x) * LERP_FACTOR
+    const ny = cur.y + (tgt.y - cur.y) * LERP_FACTOR
+    const ns = cur.scale + (tgt.scale - cur.scale) * LERP_FACTOR
+    const converged =
+      Math.abs(nx - tgt.x) < 0.05 &&
+      Math.abs(ny - tgt.y) < 0.05 &&
+      Math.abs(ns - tgt.scale) < 0.0002
+    const next = converged ? tgt : { x: nx, y: ny, scale: ns }
+    currentRef.current = next
+    applyTransform(next)
+    if (converged) {
+      rafRef.current = null
+    } else {
+      rafRef.current = requestAnimationFrame(tick)
+    }
+  }, [applyTransform])
+
+  // Start the RAF loop if not already running
+  const startAnimation = useCallback(() => {
+    if (rafRef.current === null) {
+      rafRef.current = requestAnimationFrame(tick)
+    }
+  }, [tick])
+
+  // Update target and start animation
+  const setTarget = useCallback((updater: (prev: Transform) => Transform) => {
+    targetRef.current = updater(targetRef.current)
+    startAnimation()
+  }, [startAnimation])
+
   // Compute initial transform: fit the map in the viewport with padding
+  // minScale uses 0.65 multiplier so full map + surrounding Gyeonggi is visible
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
     const { width, height } = el.getBoundingClientRect()
-    const scale = Math.min(width / MAP_WIDTH, height / MAP_HEIGHT) * 0.92
+    const scale = Math.min(width / MAP_WIDTH, height / MAP_HEIGHT) * 0.65
     minScaleRef.current = scale
     const x = (width - MAP_WIDTH * scale) / 2
     const y = (height - MAP_HEIGHT * scale) / 2
     const t = { x, y, scale }
     defaultTransformRef.current = t
-    setTransform(t)
-  }, [])
+    targetRef.current = t
+    currentRef.current = t
+    applyTransform(t)
+  }, [applyTransform])
 
-  // Sync external scaleRef for consumers like CharacterSystem
+  // Re-apply current transform after any React re-render so it doesn't get reset
+  useLayoutEffect(() => {
+    applyTransform(currentRef.current)
+  })
+
+  // Cleanup RAF on unmount
   useEffect(() => {
-    if (scaleRef) scaleRef.current = transform.scale
-  }, [transform.scale, scaleRef])
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+    }
+  }, [])
 
   const resetView = useCallback(() => {
-    if (innerRef.current) innerRef.current.style.transition = 'transform 0.3s ease-out'
-    setTransform(defaultTransformRef.current)
-  }, [])
+    const def = defaultTransformRef.current
+    // Snap current to target for instant CSS-transition-based reset animation
+    if (innerRef.current) {
+      innerRef.current.style.transition = 'transform 0.3s ease-out'
+      innerRef.current.style.transform = `translate(${def.x}px, ${def.y}px) scale(${def.scale})`
+      if (scaleRef) scaleRef.current = def.scale
+      currentRef.current = def
+      targetRef.current = def
+      setTimeout(() => {
+        if (innerRef.current) innerRef.current.style.transition = 'none'
+      }, 320)
+    }
+  }, [scaleRef])
 
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     isPanning.current = true
@@ -73,8 +141,11 @@ export default function SeoulMap({ children, overlay, scaleRef }: SeoulMapProps)
     const dx = e.clientX - lastPoint.current.x
     const dy = e.clientY - lastPoint.current.y
     lastPoint.current = { x: e.clientX, y: e.clientY }
-    setTransform(t => ({ ...t, x: t.x + dx, y: t.y + dy }))
-  }, [])
+    // Pan is instant (no lerp) for responsive feel
+    currentRef.current = { ...currentRef.current, x: currentRef.current.x + dx, y: currentRef.current.y + dy }
+    targetRef.current = { ...targetRef.current, x: targetRef.current.x + dx, y: targetRef.current.y + dy }
+    applyTransform(currentRef.current)
+  }, [applyTransform])
 
   const onMouseUp = useCallback(() => {
     isPanning.current = false
@@ -85,14 +156,12 @@ export default function SeoulMap({ children, overlay, scaleRef }: SeoulMapProps)
     if (!rect) return
     const cx = e.clientX - rect.left
     const cy = e.clientY - rect.top
-    if (innerRef.current) innerRef.current.style.transition = 'transform 0.25s ease-out'
-    setTransform(t => {
+    setTarget(t => {
       const newScale = clampScale(t.scale * 2)
       const ratio = newScale / t.scale
       return { x: cx - (cx - t.x) * ratio, y: cy - (cy - t.y) * ratio, scale: newScale }
     })
-  }, [clampScale])
-
+  }, [clampScale, setTarget])
 
   // Touch handlers
   const onTouchStart = useCallback((e: React.TouchEvent) => {
@@ -108,13 +177,10 @@ export default function SeoulMap({ children, overlay, scaleRef }: SeoulMapProps)
     }
   }, [])
 
-
   const onTouchEnd = useCallback(() => {
     isPanning.current = false
     lastPinchDist.current = null
     isPinching.current = false
-    // Re-enable smooth transition after pinch ends
-    if (innerRef.current) innerRef.current.style.transition = 'transform 0.15s ease-out'
   }, [])
 
   // Native non-passive wheel and touchmove handlers (React registers these as passive by default)
@@ -124,14 +190,13 @@ export default function SeoulMap({ children, overlay, scaleRef }: SeoulMapProps)
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault()
-      const factor = e.deltaY < 0 ? 1.1 : 0.9
-      // Smooth transition for wheel zoom
-      if (innerRef.current) innerRef.current.style.transition = 'transform 0.15s ease-out'
+      // Increased zoom factor (1.15/0.85) for more responsive zoom
+      const factor = e.deltaY < 0 ? 1.15 : 0.85
       const rect = el.getBoundingClientRect()
       const cx = e.clientX - rect.left
       const cy = e.clientY - rect.top
-      // Zoom toward cursor: keep the map point under the cursor fixed
-      setTransform(t => {
+      // Update target for RAF lerp (zoom toward cursor)
+      setTarget(t => {
         const newScale = clampScale(t.scale * factor)
         const ratio = newScale / t.scale
         return { x: cx - (cx - t.x) * ratio, y: cy - (cy - t.y) * ratio, scale: newScale }
@@ -144,19 +209,18 @@ export default function SeoulMap({ children, overlay, scaleRef }: SeoulMapProps)
         const dx = e.touches[0].clientX - lastPoint.current.x
         const dy = e.touches[0].clientY - lastPoint.current.y
         lastPoint.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-        setTransform(t => ({ ...t, x: t.x + dx, y: t.y + dy }))
+        // Pan is instant for responsiveness
+        currentRef.current = { ...currentRef.current, x: currentRef.current.x + dx, y: currentRef.current.y + dy }
+        targetRef.current = { ...targetRef.current, x: targetRef.current.x + dx, y: targetRef.current.y + dy }
+        applyTransform(currentRef.current)
       } else if (e.touches.length === 2 && lastPinchDist.current !== null) {
-        // Disable transition during pinch to avoid lag
-        if (!isPinching.current) {
-          isPinching.current = true
-          if (innerRef.current) innerRef.current.style.transition = 'none'
-        }
+        isPinching.current = true
         const dx = e.touches[0].clientX - e.touches[1].clientX
         const dy = e.touches[0].clientY - e.touches[1].clientY
         const dist = Math.hypot(dx, dy)
         const factor = dist / lastPinchDist.current
         lastPinchDist.current = dist
-        setTransform(t => ({ ...t, scale: clampScale(t.scale * factor) }))
+        setTarget(t => ({ ...t, scale: clampScale(t.scale * factor) }))
       }
     }
 
@@ -166,7 +230,7 @@ export default function SeoulMap({ children, overlay, scaleRef }: SeoulMapProps)
       el.removeEventListener('wheel', handleWheel)
       el.removeEventListener('touchmove', handleTouchMove)
     }
-  }, [])
+  }, [clampScale, setTarget, applyTransform])
 
   return (
     <div
@@ -183,9 +247,7 @@ export default function SeoulMap({ children, overlay, scaleRef }: SeoulMapProps)
       <div
         ref={innerRef}
         style={{
-          transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
           transformOrigin: '0 0',
-          transition: 'transform 0.15s ease-out',
           position: 'absolute',
           width: MAP_WIDTH,
           height: MAP_HEIGHT,
@@ -204,21 +266,21 @@ export default function SeoulMap({ children, overlay, scaleRef }: SeoulMapProps)
           position: 'absolute',
           bottom: 16,
           right: 16,
-          width: 40,
-          height: 40,
+          width: 44,
+          height: 44,
           borderRadius: '50%',
-          background: 'rgba(255,255,255,0.88)',
-          border: '1px solid rgba(0,0,0,0.12)',
+          background: 'rgba(255,255,255,0.95)',
+          border: '1.5px solid rgba(0,0,0,0.15)',
           cursor: 'pointer',
-          fontSize: 18,
+          fontSize: 20,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 10,
-          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+          boxShadow: '0 3px 10px rgba(0,0,0,0.2)',
         }}
       >
-        ⌂
+        🏠
       </button>
     </div>
   )
