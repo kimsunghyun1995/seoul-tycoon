@@ -91,7 +91,7 @@
       "description": "Fix the zoom system: (1) Lower minScale multiplier from 0.92 to 0.65 so users can zoom out to see full map + mountains + Gyeonggi. (2) Increase wheel zoom factor from 1.1/0.9 to 1.15/0.85 for more responsive zoom. (3) Use requestAnimationFrame-based smooth zoom interpolation instead of CSS transitions (which can lag). Store target transform and lerp toward it each frame. (4) Ensure zoom-toward-cursor works correctly with the new map dimensions. (5) Double-click zoom should animate smoothly over 300ms. (6) Reset view button should be clearly visible (bottom-right, round white button with a home icon emoji).",
       "test_command": "npm test",
       "acceptance": "Zoom out shows full map including mountains and Gyeonggi. Zoom in/out is smooth and responsive. Double-click zooms smoothly. Reset button clearly visible and works.",
-      "passes": false
+      "passes": true
     },
     {
       "id": "V3-8",

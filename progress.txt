@@ -31,6 +31,26 @@ Started: Fri Mar 20 17:28:59 KST 2026
   - Keep label font-size at 6-7px to avoid crowding; use fontWeight=600 for important landmarks
 ---
 
+## 2026-03-22 - V3-7
+- Replaced CSS transition zoom with RAF-based lerp interpolation (LERP_FACTOR=0.18)
+- Replaced useState<Transform> with targetRef/currentRef/rafRef pattern
+- Added `applyTransform` helper that directly updates innerRef.current.style.transform + scaleRef
+- Added `tick` RAF loop: lerps currentRef toward targetRef each frame, stops when converged
+- Added `useLayoutEffect` (no deps) to re-apply transform after any React re-render
+- minScale multiplier: 0.92 → 0.65 (full map + Gyeonggi visible at zoom-out)
+- Wheel zoom factor: 1.1/0.9 → 1.15/0.85 (more responsive)
+- Pan is instant (no lerp) for immediate responsiveness
+- Reset view uses CSS transition (0.3s) then removes it after 320ms
+- Reset button: ⌂ → 🏠 emoji, 40px → 44px, stronger box-shadow
+- Files changed: src/components/SeoulMap.tsx, prd.json
+- **Learnings for future iterations:**
+  - RAF lerp pattern: targetRef stores desired, currentRef stores interpolated, tick loop bridges them
+  - useLayoutEffect (no deps) re-applies DOM transform after every React render - prevents style reset
+  - Pan should NOT lerp (instant), zoom SHOULD lerp (smooth) - different behaviors for different gestures
+  - Mixing CSS transitions with direct style manipulation: set transition, apply transform, setTimeout to remove transition
+  - `setTarget` helper: updates targetRef then calls startAnimation (idempotent - ok to call if RAF already running)
+---
+
 ## Codebase Patterns
 - CharacterSystem uses PixiJS 8 with a ticker loop; LOD switching uses DETAIL_ZOOM_THRESHOLD to switch between dot and full figure rendering
 - Tests mock pixi.js entirely (no WebGL in jsdom), so rendering logic changes don't need separate test coverage beyond existing canvas/render tests
@@ -38,6 +58,7 @@ Started: Fri Mar 20 17:28:59 KST 2026
 - SeoulMap.tsx contains SeoulSVG (inner component), DISTRICTS array, DISTRICT_LABELS, HAN_RIVER_PATH, MAJOR_ROADS, GYEONGGI_PATH constants
 - SVG tests only check for element presence/text content, not colors - color/style changes are safe to make without breaking tests
 - Mountains: edge mountains rendered before DISTRICTS (behind them); interior mountains (남산) rendered after DISTRICTS with opacity ~0.78
+- Zoom system: RAF lerp pattern (targetRef → currentRef), useLayoutEffect for post-render DOM sync, pan instant / zoom lerped
 
 ---
 
