@@ -94,7 +94,7 @@ describe('HotspotLayer', () => {
       />
     )
     const clickRegistration = map.on.mock.calls.find(
-      ([event, layerId]: [string, string]) => event === 'click' && layerId === 'hotspot-circles'
+      (call: unknown[]) => call[0] === 'click' && call[1] === 'hotspot-circles'
     )
     expect(clickRegistration).toBeDefined()
   })
@@ -111,7 +111,7 @@ describe('HotspotLayer', () => {
     )
 
     const clickCall = map.on.mock.calls.find(
-      ([event, layerId]: [string, string]) => event === 'click' && layerId === 'hotspot-circles'
+      (call: unknown[]) => call[0] === 'click' && call[1] === 'hotspot-circles'
     )
     const clickHandler = clickCall![2] as (e: unknown) => void
 

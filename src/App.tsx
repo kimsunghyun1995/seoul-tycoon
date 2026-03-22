@@ -7,16 +7,16 @@ import BottomSheet from './components/BottomSheet'
 import WeatherOverlay, { getDayPeriod } from './components/WeatherOverlay'
 import { useSeoulData } from './hooks/useSeoulData'
 import { LOCATIONS, LOCATION_MAP } from './services/LocationRegistry'
-import type { Map } from 'maplibre-gl'
+import type { Map as MaplibreMap } from 'maplibre-gl'
 
 const API_KEY = import.meta.env.VITE_SEOUL_API_KEY ?? ''
 
 export default function App() {
   const { data, loading, error, lastUpdated, isOffline } = useSeoulData(API_KEY)
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
-  const mapRef = useRef<Map | null>(null)
-  const [mapInstance, setMapInstance] = useState<Map | null>(null)
-  const handleMapLoaded = useCallback((map: Map) => setMapInstance(map), [])
+  const mapRef = useRef<MaplibreMap | null>(null)
+  const [mapInstance, setMapInstance] = useState<MaplibreMap | null>(null)
+  const handleMapLoaded = useCallback((map: MaplibreMap) => setMapInstance(map), [])
 
   // Get weather from the first available area with weather data
   const weather = useMemo(() => {

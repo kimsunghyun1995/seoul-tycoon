@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import maplibregl, { type Map, type GeoJSONSource } from 'maplibre-gl'
+import maplibregl, { type Map as MaplibreMap, type GeoJSONSource } from 'maplibre-gl'
 import type { CongestionLevel, Location } from '../types'
 import { CONGESTION_COLOR } from '../constants/colors'
 
@@ -9,14 +9,14 @@ const CIRCLE_LAYER_ID = 'hotspot-circles'
 const LABEL_LAYER_ID = 'hotspot-labels'
 
 interface HotspotLayerProps {
-  map: Map | null
+  map: MaplibreMap | null
   locations: Location[]
-  congestionMap?: Map<string, CongestionLevel>
+  congestionMap?: globalThis.Map<string, CongestionLevel>
   selectedCode?: string | null
   onSelect?: (code: string) => void
 }
 
-function buildGeoJSON(locations: Location[], congestionMap: Map<string, CongestionLevel>) {
+function buildGeoJSON(locations: Location[], congestionMap: globalThis.Map<string, CongestionLevel>) {
   return {
     type: 'FeatureCollection' as const,
     features: locations.map(loc => {
@@ -40,7 +40,7 @@ function buildGeoJSON(locations: Location[], congestionMap: Map<string, Congesti
 export function HotspotLayer({
   map,
   locations,
-  congestionMap = new Map(),
+  congestionMap = new globalThis.Map(),
   selectedCode = null,
   onSelect,
 }: HotspotLayerProps) {
