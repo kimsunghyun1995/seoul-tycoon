@@ -350,6 +350,27 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
         </text>
       ))}
 
+      {/* 중랑천 - stream from Jungnang-gu to Han River */}
+      <path
+        d={JUNGNANGCHEON_PATH}
+        fill="none"
+        stroke="#a0ccec"
+        strokeWidth="2.5"
+        opacity="0.8"
+        strokeLinecap="round"
+      />
+
+      {/* 청계천 - stream through central Seoul */}
+      <path
+        d={CHEONGGYECHEON_PATH}
+        fill="none"
+        stroke="#a0ccec"
+        strokeWidth="2"
+        opacity="0.8"
+        strokeLinecap="round"
+      />
+      <text x="390" y="208" textAnchor="middle" fontSize="6" fill="#4a8ab0" opacity="0.7">청계천</text>
+
       {/* Han River */}
       <path
         d={HAN_RIVER_PATH}
@@ -358,7 +379,33 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
         strokeWidth="1"
         opacity="0.9"
       />
-      <text x="380" y="415" textAnchor="middle" fontSize="11" fill="#3a7fa0" fontWeight="600" opacity="0.75">
+
+      {/* Han River wave highlight (subtle undulation along top edge) */}
+      <path
+        d="M 90 367 C 130 357, 160 352, 200 355 C 230 357, 250 362, 280 365 C 300 367, 310 369, 325 365 C 340 361, 350 352, 370 349 C 390 346, 410 345, 430 347 C 455 350, 475 355, 500 352 C 525 349, 545 342, 570 345 C 595 348, 620 357, 650 355"
+        fill="none"
+        stroke="#b8dff5"
+        strokeWidth="1.5"
+        opacity="0.5"
+        strokeLinecap="round"
+      />
+
+      {/* Bridges over Han River */}
+      {BRIDGES.map(b => (
+        <g key={b.name}>
+          <rect
+            x={b.x - 3}
+            y={b.topY}
+            width={6}
+            height={b.botY - b.topY}
+            fill="#c0c8d0"
+            opacity="0.88"
+            rx="1"
+          />
+        </g>
+      ))}
+
+      <text x="380" y="420" textAnchor="middle" fontSize="11" fill="#3a7fa0" fontWeight="600" opacity="0.75">
         한강
       </text>
 
@@ -460,27 +507,56 @@ const DISTRICT_LABELS = [
   { id: 'l-gangdong', name: '강동', x: 558, y: 340 },
 ]
 
-// Han River - flows west to east across the southern middle of Seoul
+// Han River - flows west to east across the southern middle of Seoul (wider ~30-40px)
 const HAN_RIVER_PATH = `
-  M 90 370
-  C 130 360, 160 355, 200 358
-  C 230 360, 250 365, 280 368
-  C 300 370, 310 372, 325 368
-  C 340 364, 350 355, 370 352
-  C 390 349, 410 348, 430 350
-  C 455 353, 475 358, 500 355
-  C 525 352, 545 345, 570 348
-  C 595 351, 620 360, 650 358
-  L 650 395
-  C 620 398, 595 392, 570 390
-  C 545 388, 525 382, 500 385
-  C 475 388, 455 393, 430 390
-  C 410 388, 390 382, 370 382
-  C 350 382, 340 385, 325 388
-  C 310 391, 300 392, 280 390
-  C 250 387, 230 382, 200 380
-  C 160 377, 130 380, 90 390
+  M 90 362
+  C 130 352, 160 347, 200 350
+  C 230 352, 250 357, 280 360
+  C 300 362, 310 364, 325 360
+  C 340 356, 350 347, 370 344
+  C 390 341, 410 340, 430 342
+  C 455 345, 475 350, 500 347
+  C 525 344, 545 337, 570 340
+  C 595 343, 620 352, 650 350
+  L 650 400
+  C 620 403, 595 397, 570 395
+  C 545 393, 525 387, 500 390
+  C 475 393, 455 398, 430 395
+  C 410 393, 390 387, 370 387
+  C 350 387, 340 390, 325 393
+  C 310 396, 300 397, 280 395
+  C 250 392, 230 387, 200 385
+  C 160 382, 130 385, 90 395
   Z
+`
+
+// Bridges crossing the Han River (x position, approx top/bottom bank y)
+const BRIDGES = [
+  { name: '양화대교', x: 210, topY: 350, botY: 385 },
+  { name: '마포대교', x: 248, topY: 354, botY: 387 },
+  { name: '원효대교', x: 282, topY: 358, botY: 392 },
+  { name: '한강대교', x: 310, topY: 361, botY: 394 },
+  { name: '반포대교', x: 358, topY: 346, botY: 387 },
+  { name: '한남대교', x: 392, topY: 342, botY: 387 },
+  { name: '성수대교', x: 442, topY: 341, botY: 395 },
+  { name: '영동대교', x: 472, topY: 347, botY: 393 },
+  { name: '잠실대교', x: 512, topY: 345, botY: 390 },
+]
+
+// 청계천 - thin stream flowing east through central Seoul
+const CHEONGGYECHEON_PATH = `
+  M 285 197
+  C 305 193, 328 190, 352 192
+  C 374 194, 398 198, 422 202
+  C 444 206, 464 212, 482 218
+`
+
+// 중랑천 - stream from Jungnang-gu flowing south into Han River
+const JUNGNANGCHEON_PATH = `
+  M 532 88
+  C 528 118, 524 148, 520 175
+  C 516 202, 511 228, 507 255
+  C 503 282, 500 312, 499 347
 `
 
 const MAJOR_ROADS = [
