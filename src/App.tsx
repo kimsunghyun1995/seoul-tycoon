@@ -4,7 +4,7 @@ import { HotspotLayer } from './components/HotspotMarker'
 import CharacterSystem from './components/CharacterSystem'
 import TopBar from './components/TopBar'
 import BottomSheet from './components/BottomSheet'
-import WeatherOverlay from './components/WeatherOverlay'
+import WeatherOverlay, { getDayPeriod } from './components/WeatherOverlay'
 import { useSeoulData } from './hooks/useSeoulData'
 import { LOCATIONS, LOCATION_MAP } from './services/LocationRegistry'
 import type { Map } from 'maplibre-gl'
@@ -61,10 +61,13 @@ export default function App() {
 
   const handleDismiss = () => setSelectedCode(null)
 
+  const dayPeriod = getDayPeriod(new Date().getHours())
+  const mapFilter = dayPeriod === 'night' ? { filter: 'brightness(0.7)' } : undefined
+
   return (
     <div data-testid="app-root" className="w-full h-full relative overflow-hidden">
       {/* MapLibre map */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0" style={mapFilter}>
         <MapView mapRef={mapRef} onMapLoaded={handleMapLoaded} />
         <HotspotLayer
           map={mapInstance}

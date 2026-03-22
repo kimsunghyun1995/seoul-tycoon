@@ -401,4 +401,4 @@ function Cloud({ x, y, size, speed, dark }: { x: number; y: number; size: number
   )
 }
 
-export { getSkyState }
+export { getSkyState, getDayPeriod }
