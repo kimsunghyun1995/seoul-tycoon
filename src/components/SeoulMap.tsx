@@ -256,6 +256,60 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
       <text x="700" y="350" textAnchor="middle" fontSize="11" fill="#a09888" fontWeight="500" opacity="0.8">경기도</text>
       <text x="350" y="668" textAnchor="middle" fontSize="11" fill="#a09888" fontWeight="500" opacity="0.8">경기도</text>
 
+      {/* === MOUNTAINS (rendered behind districts) === */}
+
+      {/* 북한산 / 도봉산 / 수락산 - North edge (largest mountain feature) */}
+      <g>
+        {/* Back layer - darkest */}
+        <path d="M 158 95 C 210 40 272 5 320 18 C 358 3 402 -4 448 15 C 494 33 538 60 578 85 L 578 95 Z" fill="#4a7a4a" opacity="0.9" />
+        {/* Mid layer */}
+        <path d="M 182 95 C 228 52 278 28 316 38 C 350 26 388 24 425 44 C 463 60 505 75 538 90 L 538 95 Z" fill="#6a9c5c" opacity="0.9" />
+        {/* Front layer - lightest */}
+        <path d="M 212 95 C 248 66 282 50 312 54 C 340 46 365 50 392 64 C 416 75 445 84 472 92 L 472 95 Z" fill="#88b87a" opacity="0.9" />
+        {/* Tree silhouettes along ridge */}
+        <polygon points="258,63 254,72 262,72" fill="#2a5a2a" opacity="0.85" />
+        <polygon points="280,49 276,58 284,58" fill="#2a5a2a" opacity="0.85" />
+        <polygon points="312,39 308,48 316,48" fill="#2a5a2a" opacity="0.85" />
+        <polygon points="346,32 342,41 350,41" fill="#2a5a2a" opacity="0.85" />
+        <polygon points="382,28 378,37 386,37" fill="#2a5a2a" opacity="0.85" />
+        <polygon points="418,27 414,36 422,36" fill="#2a5a2a" opacity="0.85" />
+        <polygon points="450,37 446,46 454,46" fill="#2a5a2a" opacity="0.85" />
+        <polygon points="482,52 478,61 486,61" fill="#2a5a2a" opacity="0.85" />
+        <polygon points="512,66 508,75 516,75" fill="#2a5a2a" opacity="0.85" />
+        <text x="342" y="15" textAnchor="middle" fontSize="7" fill="#2a5a2a" fontWeight="500" opacity="0.8">북한산</text>
+      </g>
+
+      {/* 인왕산 - Northwest, near Eunpyeong/Jongno */}
+      <g>
+        <path d="M 232 138 C 248 110 265 98 272 101 C 280 94 292 100 308 122 L 308 138 Z" fill="#4a7a4a" opacity="0.9" />
+        <path d="M 238 138 C 252 116 267 106 272 108 C 279 102 290 106 303 126 L 303 138 Z" fill="#6a9c5c" opacity="0.9" />
+        <path d="M 246 138 C 257 122 268 114 272 115 C 277 111 287 115 296 128 L 296 138 Z" fill="#88b87a" opacity="0.9" />
+        <polygon points="269,106 265,115 273,115" fill="#2a5a2a" opacity="0.85" />
+        <polygon points="276,100 272,109 280,109" fill="#2a5a2a" opacity="0.85" />
+        <text x="270" y="95" textAnchor="middle" fontSize="6" fill="#2a5a2a" opacity="0.75">인왕산</text>
+      </g>
+
+      {/* 관악산 - South edge */}
+      <g>
+        <path d="M 246 528 C 264 496 284 476 312 476 C 334 470 360 478 380 496 C 390 508 392 520 390 528 Z" fill="#4a7a4a" opacity="0.9" />
+        <path d="M 256 528 C 271 500 290 483 312 483 C 332 478 354 485 370 501 L 370 528 Z" fill="#6a9c5c" opacity="0.9" />
+        <path d="M 268 528 C 280 506 295 494 312 496 C 328 491 347 498 358 510 L 358 528 Z" fill="#88b87a" opacity="0.9" />
+        <polygon points="307,481 303,490 311,490" fill="#2a5a2a" opacity="0.85" />
+        <polygon points="316,476 312,485 320,485" fill="#2a5a2a" opacity="0.85" />
+        <polygon points="325,480 321,489 329,489" fill="#2a5a2a" opacity="0.85" />
+        <text x="318" y="472" textAnchor="middle" fontSize="7" fill="#2a5a2a" fontWeight="500" opacity="0.8">관악산</text>
+      </g>
+
+      {/* 아차산 - East edge, near Gangdong */}
+      <g>
+        <path d="M 598 375 C 610 335 620 302 630 298 C 640 292 652 302 660 322 C 667 340 666 362 662 375 Z" fill="#4a7a4a" opacity="0.9" />
+        <path d="M 603 375 C 614 338 622 310 630 306 C 638 302 649 310 656 328 C 662 344 661 363 658 375 Z" fill="#6a9c5c" opacity="0.9" />
+        <path d="M 609 375 C 618 342 624 320 630 317 C 637 314 645 322 650 337 L 650 375 Z" fill="#88b87a" opacity="0.9" />
+        <polygon points="627,305 623,314 631,314" fill="#2a5a2a" opacity="0.85" />
+        <polygon points="633,299 629,308 637,308" fill="#2a5a2a" opacity="0.85" />
+        <text x="632" y="295" textAnchor="middle" fontSize="7" fill="#2a5a2a" fontWeight="500" opacity="0.8">아차산</text>
+      </g>
+
       {/* Districts - 25 Seoul-gu */}
       {DISTRICTS.map(d => (
         <path
@@ -269,6 +323,16 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
           opacity="0.95"
         />
       ))}
+
+      {/* 남산 - Center, rendered above districts for visibility */}
+      <g opacity="0.78">
+        <path d="M 314 268 C 324 244 333 230 341 232 C 350 226 360 231 368 250 L 368 268 Z" fill="#5a8a5a" />
+        <path d="M 319 268 C 327 248 335 237 341 238 C 348 234 356 238 363 254 L 363 268 Z" fill="#7aaa6a" />
+        <path d="M 326 268 C 332 252 338 244 341 245 C 345 243 352 246 357 258 L 357 268 Z" fill="#9ac88a" />
+        <polygon points="338,237 334,246 342,246" fill="#2a5a2a" opacity="0.9" />
+        <polygon points="344,231 340,240 348,240" fill="#2a5a2a" opacity="0.9" />
+        <text x="341" y="227" textAnchor="middle" fontSize="6" fill="#2a5a2a" opacity="0.8">남산</text>
+      </g>
 
       {/* District labels */}
       {DISTRICT_LABELS.map(l => (
