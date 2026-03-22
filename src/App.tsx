@@ -1,19 +1,18 @@
 import { useState, useMemo, useRef } from 'react'
-import SeoulMap from './components/SeoulMap'
+import MapView from './components/MapView'
 import TopBar from './components/TopBar'
 import BottomSheet from './components/BottomSheet'
 import WeatherOverlay from './components/WeatherOverlay'
-import CharacterSystem from './components/CharacterSystem'
-import { HotspotLayer } from './components/HotspotMarker'
 import { useSeoulData } from './hooks/useSeoulData'
-import { LOCATIONS, LOCATION_MAP } from './services/LocationRegistry'
+import { LOCATION_MAP } from './services/LocationRegistry'
+import type { Map } from 'maplibre-gl'
 
 const API_KEY = import.meta.env.VITE_SEOUL_API_KEY ?? ''
 
 export default function App() {
-  const { data, congestionMap, populationMap, loading, error, lastUpdated, isOffline } = useSeoulData(API_KEY)
+  const { data, loading, error, lastUpdated, isOffline } = useSeoulData(API_KEY)
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
-  const zoomScaleRef = useRef(1)
+  const mapRef = useRef<Map | null>(null)
 
   // Get weather from the first available area with weather data
   const weather = useMemo(() => {
@@ -31,29 +30,17 @@ export default function App() {
     return data.get(loc.name) ?? null
   }, [selectedCode, data])
 
-  const handleSelect = (code: string) => setSelectedCode(code)
   const handleDismiss = () => setSelectedCode(null)
 
   return (
     <div data-testid="app-root" className="w-full h-full relative overflow-hidden">
-      {/* Sky/weather gradient background */}
-      <WeatherOverlay weather={weather} />
-
-      {/* SVG Map with PixiJS character overlay inside same transformed container */}
-      <div className="absolute inset-0 z-2">
-        <SeoulMap
-          scaleRef={zoomScaleRef}
-          overlay={<CharacterSystem locations={LOCATIONS} congestionMap={congestionMap} populationMap={populationMap} zoomScaleRef={zoomScaleRef} />}
-        >
-          {/* Hotspot markers rendered inside SVG */}
-          <HotspotLayer
-            locations={LOCATIONS}
-            congestionMap={congestionMap}
-            selectedCode={selectedCode}
-            onSelect={handleSelect}
-          />
-        </SeoulMap>
+      {/* MapLibre map */}
+      <div className="absolute inset-0 z-0">
+        <MapView mapRef={mapRef} />
       </div>
+
+      {/* Weather overlay */}
+      <WeatherOverlay weather={weather} />
 
       {/* Top bar */}
       <div className="absolute inset-x-0 top-0 z-10">
