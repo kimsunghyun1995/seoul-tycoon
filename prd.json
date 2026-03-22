@@ -55,7 +55,7 @@
       "description": "Rewrite CharacterSystem to overlay on MapLibre and use geographic coordinates. Key changes: (1) Position the PixiJS canvas absolutely over the MapLibre canvas. (2) On each animation frame, use map.project(lngLat) to convert each character's home location (lng/lat) to screen pixels. (3) Characters walk within a pixel radius around their projected home position. (4) On map move/zoom events, update all character positions by re-projecting. (5) Keep the existing tiny character rendering (V3-1 dot style). (6) Keep population-proportional character counts (1 per 100 people, max 500). (7) Handle viewport culling: only render characters whose projected position is within the visible screen bounds. (8) The canvas should resize with the map container. (9) Pass map ref from MapView to CharacterSystem via props or context.",
       "test_command": "npm test",
       "acceptance": "Tiny characters walk around at correct geographic positions on the MapLibre map. Characters move correctly when map is panned/zoomed. Only visible characters are rendered. Performance smooth with 1000+ characters.",
-      "passes": false
+      "passes": true
     },
     {
       "id": "V4-5",

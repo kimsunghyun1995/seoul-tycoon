@@ -58,3 +58,23 @@ Started: Fri Mar 20 17:28:59 KST 2026
   - layer-specific map.on('click', layerId, handler) gives e.features[] directly, no need for queryRenderedFeatures
   - isStyleLoaded() check is needed before addSource/addLayer; fall back to map.on('load', ...) if not ready
 ---
+
+## 2026-03-23 - V4-4
+- Rewrote CharacterSystem.tsx with MapLibre coordinate projection
+  - `map: MaplibreMap | null` prop replaces old `zoomScaleRef`
+  - Characters store `homeLng/homeLat`; `map.project([lng, lat])` called each ticker frame
+  - Screen position = projected home + screen-space `offsetX/offsetY` (characters walk in pixel space)
+  - Viewport culling: `container.visible = false` when outside canvas bounds
+  - Map `resize` event updates PixiJS renderer dimensions
+  - LOD threshold: dots at zoom < 14, full detail (legs animation) at zoom >= 14
+  - Canvas size: `width: '100%', height: '100%'` — fills parent absolutely
+- Updated App.tsx: added CharacterSystem with mapInstance + populationMap (areaPopMin+Max avg)
+- Updated App.test.tsx: added pixi.js mock class (Application/Graphics/Container/Ticker) to suppress unhandled rejections when CharacterSystem renders in App
+- Updated CharacterSystem.test.tsx: lng/lat mockLocations, `map` prop, added null map test
+- All 68 tests pass, build succeeds
+- **Learnings for future iterations:**
+  - App.test.tsx must mock pixi.js when CharacterSystem is included in App — otherwise initPixi() runs and throws unhandled rejection in jsdom
+  - MapLibre Mock in App.test.tsx needs `off()` and `getZoom()` methods to support CharacterSystem
+  - Characters use screen-space offsets from projected home; no special map-move handling needed — re-projecting each frame naturally follows map pan/zoom
+  - `canvas.style.width = '100%'` (not fixed px) allows canvas to fill parent container for resize support
+---
