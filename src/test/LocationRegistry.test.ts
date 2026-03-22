@@ -6,12 +6,14 @@ describe('LocationRegistry', () => {
     expect(LOCATIONS).toHaveLength(122)
   })
 
-  it('all locations have valid SVG coordinates', () => {
+  it('all locations have valid geographic coordinates', () => {
     for (const loc of LOCATIONS) {
-      expect(loc.x).toBeGreaterThanOrEqual(80)
-      expect(loc.x).toBeLessThanOrEqual(680)
-      expect(loc.y).toBeGreaterThanOrEqual(20)
-      expect(loc.y).toBeLessThanOrEqual(650)
+      // Seoul latitude range: roughly 37.43 ~ 37.70
+      expect(loc.lat).toBeGreaterThanOrEqual(37.4)
+      expect(loc.lat).toBeLessThanOrEqual(37.75)
+      // Seoul longitude range: roughly 126.76 ~ 127.22
+      expect(loc.lng).toBeGreaterThanOrEqual(126.7)
+      expect(loc.lng).toBeLessThanOrEqual(127.25)
     }
   })
 
@@ -34,15 +36,15 @@ describe('LocationRegistry', () => {
     expect(loc?.code).toBe('POI001')
   })
 
-  it('well-known locations are in correct relative positions', () => {
-    // Gangnam should be south of Jongno
+  it('well-known locations are in correct geographic positions', () => {
+    // Gangnam (south) should have smaller lat than Jongno (north)
     const gangnam = LOCATION_MAP.get('POI035')!
     const jongno = LOCATION_MAP.get('POI004')!
-    expect(gangnam.y).toBeGreaterThan(jongno.y)
+    expect(gangnam.lat).toBeLessThan(jongno.lat)
 
-    // Nowon (northeast) should be east of Eunpyeong (northwest)
+    // Nowon (northeast) should have larger lng than Eunpyeong (northwest)
     const nowon = LOCATION_MAP.get('POI064')!
     const eunpyeong = LOCATION_MAP.get('POI075')!
-    expect(nowon.x).toBeGreaterThan(eunpyeong.x)
+    expect(nowon.lng).toBeGreaterThan(eunpyeong.lng)
   })
 })

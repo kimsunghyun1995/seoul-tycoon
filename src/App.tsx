@@ -1,10 +1,11 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import MapView from './components/MapView'
+import { HotspotLayer } from './components/HotspotMarker'
 import TopBar from './components/TopBar'
 import BottomSheet from './components/BottomSheet'
 import WeatherOverlay from './components/WeatherOverlay'
 import { useSeoulData } from './hooks/useSeoulData'
-import { LOCATION_MAP } from './services/LocationRegistry'
+import { LOCATIONS, LOCATION_MAP } from './services/LocationRegistry'
 import type { Map } from 'maplibre-gl'
 
 const API_KEY = import.meta.env.VITE_SEOUL_API_KEY ?? ''
@@ -13,6 +14,8 @@ export default function App() {
   const { data, loading, error, lastUpdated, isOffline } = useSeoulData(API_KEY)
   const [selectedCode, setSelectedCode] = useState<string | null>(null)
   const mapRef = useRef<Map | null>(null)
+  const [mapInstance, setMapInstance] = useState<Map | null>(null)
+  const handleMapLoaded = useCallback((map: Map) => setMapInstance(map), [])
 
   // Get weather from the first available area with weather data
   const weather = useMemo(() => {
@@ -20,6 +23,18 @@ export default function App() {
       if (areaData.weather) return areaData.weather
     }
     return null
+  }, [data])
+
+  // Build congestion map (code → congestion level) from API data
+  const congestionMap = useMemo(() => {
+    const map = new Map<string, import('./types').CongestionLevel>()
+    for (const loc of LOCATIONS) {
+      const areaData = data.get(loc.name)
+      if (areaData?.population?.areaCongestLvl) {
+        map.set(loc.code, areaData.population.areaCongestLvl)
+      }
+    }
+    return map
   }, [data])
 
   // Get selected area data
@@ -36,7 +51,14 @@ export default function App() {
     <div data-testid="app-root" className="w-full h-full relative overflow-hidden">
       {/* MapLibre map */}
       <div className="absolute inset-0 z-0">
-        <MapView mapRef={mapRef} />
+        <MapView mapRef={mapRef} onMapLoaded={handleMapLoaded} />
+        <HotspotLayer
+          map={mapInstance}
+          locations={LOCATIONS}
+          congestionMap={congestionMap}
+          selectedCode={selectedCode}
+          onSelect={setSelectedCode}
+        />
       </div>
 
       {/* Weather overlay */}

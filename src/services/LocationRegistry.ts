@@ -1,31 +1,5 @@
 import type { Location } from '../types'
 
-/**
- * 122 Seoul hotspot locations mapped to SVG coordinates (800x700 viewport).
- * Coordinates derived from real geographic positions (lat/lng) projected
- * onto the Seoul SVG map.
- *
- * Seoul geographic bounds (approx):
- *   Lat: 37.43 (south) ~ 37.69 (north)  → SVG y: 650 ~ 20
- *   Lng: 126.76 (west) ~ 127.18 (east)  → SVG x: 80 ~ 680
- */
-
-function geo2svg(lat: number, lng: number): { x: number; y: number } {
-  const LAT_MIN = 37.43
-  const LAT_MAX = 37.70
-  const LNG_MIN = 126.76
-  const LNG_MAX = 127.22
-  const SVG_X_MIN = 80
-  const SVG_X_MAX = 680
-  const SVG_Y_MIN = 20
-  const SVG_Y_MAX = 650
-  const rawX = SVG_X_MIN + ((lng - LNG_MIN) / (LNG_MAX - LNG_MIN)) * (SVG_X_MAX - SVG_X_MIN)
-  const rawY = SVG_Y_MAX - ((lat - LAT_MIN) / (LAT_MAX - LAT_MIN)) * (SVG_Y_MAX - SVG_Y_MIN)
-  const x = Math.round(Math.max(SVG_X_MIN, Math.min(SVG_X_MAX, rawX)))
-  const y = Math.round(Math.max(SVG_Y_MIN, Math.min(SVG_Y_MAX, rawY)))
-  return { x, y }
-}
-
 // Raw location data: [code, name, lat, lng]
 const RAW_LOCATIONS: [string, string, number, number][] = [
   // Jongno / Bukchon area
@@ -175,7 +149,8 @@ const RAW_LOCATIONS: [string, string, number, number][] = [
 export const LOCATIONS: Location[] = RAW_LOCATIONS.map(([code, name, lat, lng]) => ({
   code,
   name,
-  ...geo2svg(lat, lng),
+  lng,
+  lat,
 }))
 
 export const LOCATION_MAP: Map<string, Location> = new Map(

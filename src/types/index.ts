@@ -56,6 +56,6 @@ export interface AreaData {
 export interface Location {
   code: string
   name: string
-  x: number
-  y: number
+  lng: number
+  lat: number
 }

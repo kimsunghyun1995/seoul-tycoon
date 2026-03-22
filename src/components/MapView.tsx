@@ -5,10 +5,13 @@ import mapStyle from '../assets/map-style.json'
 
 interface MapViewProps {
   mapRef?: React.MutableRefObject<Map | null>
+  onMapLoaded?: (map: Map) => void
 }
 
-export default function MapView({ mapRef }: MapViewProps) {
+export default function MapView({ mapRef, onMapLoaded }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const onMapLoadedRef = useRef(onMapLoaded)
+  onMapLoadedRef.current = onMapLoaded
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -24,6 +27,10 @@ export default function MapView({ mapRef }: MapViewProps) {
     })
 
     if (mapRef) mapRef.current = map
+
+    map.on('load', () => {
+      onMapLoadedRef.current?.(map)
+    })
 
     return () => {
       map.remove()

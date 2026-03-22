@@ -1,102 +1,175 @@
+import { useEffect, useRef } from 'react'
+import maplibregl, { type Map, type GeoJSONSource } from 'maplibre-gl'
 import type { CongestionLevel, Location } from '../types'
 import { CONGESTION_COLOR } from '../constants/colors'
 
-interface HotspotMarkerProps {
-  location: Location
-  congestionLevel?: CongestionLevel
-  isSelected?: boolean
-  onClick?: (code: string) => void
-}
-
-export default function HotspotMarker({
-  location,
-  congestionLevel = '여유',
-  isSelected = false,
-  onClick,
-}: HotspotMarkerProps) {
-  const color = CONGESTION_COLOR[congestionLevel]
-
-  return (
-    <g
-      data-testid={`marker-${location.code}`}
-      style={{ cursor: 'pointer' }}
-      onClick={() => onClick?.(location.code)}
-    >
-      {/* Outer pulse ring */}
-      <circle
-        cx={location.x}
-        cy={location.y}
-        r={isSelected ? 14 : 10}
-        fill={color}
-        opacity={0.25}
-      >
-        <animate
-          attributeName="r"
-          values={isSelected ? '12;18;12' : '8;14;8'}
-          dur="2s"
-          repeatCount="indefinite"
-        />
-        <animate
-          attributeName="opacity"
-          values="0.4;0.1;0.4"
-          dur="2s"
-          repeatCount="indefinite"
-        />
-      </circle>
-
-      {/* Inner solid dot */}
-      <circle
-        cx={location.x}
-        cy={location.y}
-        r={isSelected ? 6 : 4}
-        fill={color}
-        stroke="white"
-        strokeWidth={isSelected ? 2 : 1.5}
-      />
-
-      {/* Label */}
-      <text
-        x={location.x}
-        y={location.y - 12}
-        textAnchor="middle"
-        fontSize={isSelected ? '9' : '7.5'}
-        fontWeight={isSelected ? '700' : '500'}
-        fill="#2d5a27"
-        stroke="white"
-        strokeWidth="2.5"
-        paintOrder="stroke"
-        opacity="0.95"
-      >
-        {location.name}
-      </text>
-    </g>
-  )
-}
+const SOURCE_ID = 'hotspots'
+const RING_LAYER_ID = 'hotspot-rings'
+const CIRCLE_LAYER_ID = 'hotspot-circles'
+const LABEL_LAYER_ID = 'hotspot-labels'
 
 interface HotspotLayerProps {
+  map: Map | null
   locations: Location[]
   congestionMap?: Map<string, CongestionLevel>
   selectedCode?: string | null
   onSelect?: (code: string) => void
 }
 
+function buildGeoJSON(locations: Location[], congestionMap: Map<string, CongestionLevel>) {
+  return {
+    type: 'FeatureCollection' as const,
+    features: locations.map(loc => {
+      const congestion = congestionMap.get(loc.code) ?? '여유'
+      return {
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [loc.lng, loc.lat],
+        },
+        properties: {
+          code: loc.code,
+          name: loc.name,
+          color: CONGESTION_COLOR[congestion],
+        },
+      }
+    }),
+  }
+}
+
 export function HotspotLayer({
+  map,
   locations,
   congestionMap = new Map(),
   selectedCode = null,
   onSelect,
 }: HotspotLayerProps) {
-  return (
-    <g data-testid="hotspot-layer">
-      {locations.map(loc => (
-        <HotspotMarker
-          key={loc.code}
-          location={loc}
-          congestionLevel={congestionMap.get(loc.code)}
-          isSelected={loc.code === selectedCode}
-          onClick={onSelect}
-        />
-      ))}
-    </g>
-  )
+  const popupRef = useRef<maplibregl.Popup | null>(null)
+
+  // Add or update source and layers
+  useEffect(() => {
+    if (!map) return
+
+    const geoJson = buildGeoJSON(locations, congestionMap)
+
+    const addLayers = () => {
+      if (map.getSource(SOURCE_ID)) {
+        const source = map.getSource(SOURCE_ID) as GeoJSONSource
+        source.setData(geoJson)
+        return
+      }
+
+      map.addSource(SOURCE_ID, { type: 'geojson', data: geoJson })
+
+      // Outer pulse ring
+      map.addLayer({
+        id: RING_LAYER_ID,
+        type: 'circle',
+        source: SOURCE_ID,
+        paint: {
+          'circle-radius': ['case', ['==', ['get', 'code'], selectedCode ?? ''], 14, 10],
+          'circle-color': ['get', 'color'],
+          'circle-opacity': 0.25,
+        },
+      })
+
+      // Inner solid dot
+      map.addLayer({
+        id: CIRCLE_LAYER_ID,
+        type: 'circle',
+        source: SOURCE_ID,
+        paint: {
+          'circle-radius': ['case', ['==', ['get', 'code'], selectedCode ?? ''], 8, 5],
+          'circle-color': ['get', 'color'],
+          'circle-stroke-width': ['case', ['==', ['get', 'code'], selectedCode ?? ''], 2, 1.5],
+          'circle-stroke-color': 'white',
+          'circle-pitch-alignment': 'map',
+        },
+      })
+
+      // Labels at higher zoom levels
+      map.addLayer({
+        id: LABEL_LAYER_ID,
+        type: 'symbol',
+        source: SOURCE_ID,
+        minzoom: 12,
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-size': 10,
+          'text-offset': [0, -1.5],
+          'text-anchor': 'bottom',
+          'text-font': ['Noto Sans Regular'],
+        },
+        paint: {
+          'text-color': '#555',
+          'text-halo-color': 'white',
+          'text-halo-width': 1.5,
+        },
+      })
+    }
+
+    if (map.isStyleLoaded()) {
+      addLayers()
+    } else {
+      map.on('load', addLayers)
+      return () => { map.off('load', addLayers) }
+    }
+  }, [map, locations, congestionMap]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update selected marker size
+  useEffect(() => {
+    if (!map || !map.getLayer(CIRCLE_LAYER_ID)) return
+
+    map.setPaintProperty(RING_LAYER_ID, 'circle-radius',
+      ['case', ['==', ['get', 'code'], selectedCode ?? ''], 14, 10])
+    map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-radius',
+      ['case', ['==', ['get', 'code'], selectedCode ?? ''], 8, 5])
+    map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-stroke-width',
+      ['case', ['==', ['get', 'code'], selectedCode ?? ''], 2, 1.5])
+  }, [map, selectedCode])
+
+  // Click and cursor handlers
+  useEffect(() => {
+    if (!map) return
+
+    const handleClick = (e: maplibregl.MapLayerMouseEvent) => {
+      if (!e.features?.length) return
+      const feature = e.features[0]
+      const code = feature.properties?.code as string | undefined
+      const name = feature.properties?.name as string | undefined
+      if (!code) return
+
+      onSelect?.(code)
+
+      popupRef.current?.remove()
+      const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number]
+      popupRef.current = new maplibregl.Popup({ closeButton: false, offset: 12 })
+        .setLngLat(coords)
+        .setHTML(`<div style="font-size:12px;font-weight:600;color:#333;padding:2px 4px">${name ?? code}</div>`)
+        .addTo(map)
+    }
+
+    const handleMouseEnter = () => { map.getCanvas().style.cursor = 'pointer' }
+    const handleMouseLeave = () => { map.getCanvas().style.cursor = '' }
+
+    map.on('click', CIRCLE_LAYER_ID, handleClick)
+    map.on('mouseenter', CIRCLE_LAYER_ID, handleMouseEnter)
+    map.on('mouseleave', CIRCLE_LAYER_ID, handleMouseLeave)
+
+    return () => {
+      map.off('click', CIRCLE_LAYER_ID, handleClick)
+      map.off('mouseenter', CIRCLE_LAYER_ID, handleMouseEnter)
+      map.off('mouseleave', CIRCLE_LAYER_ID, handleMouseLeave)
+    }
+  }, [map, onSelect])
+
+  // Cleanup popup on unmount
+  useEffect(() => {
+    return () => { popupRef.current?.remove() }
+  }, [])
+
+  return null
 }
+
+// Legacy default export removed — use HotspotLayer instead
+export default HotspotLayer
