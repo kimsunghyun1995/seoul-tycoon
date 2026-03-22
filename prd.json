@@ -99,7 +99,7 @@
       "description": "Completely rewrite WeatherOverlay for impressive visual effects. (1) DAY/NIGHT: Based on current hour - day(07-17) bright, sunset(17-19) warm orange tint, night(19-05) dark overlay with stars and moon, dawn(05-07) soft pink. Apply as a semi-transparent overlay that tints the entire scene. At night: add 30-40 twinkling star dots (white, CSS animation varying opacity), crescent moon SVG in top-right. (2) CLEAR weather: Animated sun with rotating ray lines (CSS rotate animation), soft warm glow. Fluffy clouds (2-3) drifting slowly using CSS translateX animation. (3) RAIN: 150+ rain streak particles on canvas, darker sky overlay, cloud layer at top. Rain streaks should be clearly visible (opacity 0.6+). (4) SNOW: 80+ snowflakes with wobble drift, varying sizes 2-8px, gentle falling speed. (5) DUST: Heavy amber haze overlay (opacity 0.3), floating dust motes. (6) Weather overlay opacity should be 0.5-0.8 for particles layer (clearly visible). Sky tint overlay should be 0.2-0.4 (tints but doesn't hide map). (7) Smooth 1s crossfade between weather states.",
       "test_command": "npm test",
       "acceptance": "Weather effects are clearly visible and impressive. Night shows stars and moon with dark tint. Rain has dense visible streaks. Snow is gentle and beautiful. Sun has animated rays. Day/night cycle reflects actual time.",
-      "passes": false
+      "passes": true
     }
   ],
   "test_commands": {
