@@ -67,7 +67,7 @@
       "description": "Redesign the Han River to be wider, more prominent, and include bridges. Changes: (1) Make the river 2x wider than current (about 30-35px SVG width instead of current ~20px). Use a solid sky blue (#8ec5e8) fill. (2) Add subtle wave pattern using a SVG path with slight undulations along the river edges. (3) Add 8-10 bridge crossings as small gray rectangles perpendicular to the river flow at realistic positions (Banpo, Hannam, Dongjak, Mapo, Yeongdong, Jamsil, Seongsu, Yangwha bridges etc). Bridges should be thin gray lines (#c0c0c0) with slightly wider ends. (4) Add 청계천 (Cheonggyecheon) as a thin light blue stream flowing east through Jung-gu/Jongno area. (5) Add 중랑천 as thin stream in Jungnang-gu area flowing into Han River. River should feel like a major geographic feature dividing the city.",
       "test_command": "npm test",
       "acceptance": "Han River is wide and prominent sky blue. 8+ bridges cross the river. Cheonggyecheon stream visible as thin blue line in central Seoul. River is a dominant visual feature of the map.",
-      "passes": false
+      "passes": true
     },
     {
       "id": "V3-5",
@@ -75,7 +75,7 @@
       "description": "Add simplified but recognizable landmark SVG illustrations at their correct positions on the map. Each landmark should be 30-60px in size, drawn with simple SVG shapes (rects, paths, circles). Landmarks to add: (1) 경복궁 - traditional Korean palace: red/brown roof (curved trapezoid) on beige base, at Jongno ~(320, 160). (2) 남산타워 - tower on green hill: thin tall gray tower with observation deck bulge, at ~(340, 250). (3) 롯데월드타워 - very tall thin modern skyscraper, slight taper, at Songpa ~(530, 370). (4) 63빌딩 - golden rectangular tall building near Yeouido ~(225, 310). (5) DDP - curved silver/gray organic shape at Dongdaemun ~(420, 190). (6) 국회의사당 - building with green dome at Yeouido ~(210, 330). (7) 코엑스 - large gray rectangle building at Gangnam ~(460, 400). (8) 김포공항 - small airplane icon with runway at Gangseo ~(120, 270). (9) 월드컵경기장 - oval stadium shape at Mapo ~(205, 195). (10) 올림픽공원 - park gate icon at Songpa ~(545, 410). Each landmark gets a small Korean label underneath in 7-8px font. Landmarks are rendered ABOVE districts but BELOW hotspot markers.",
       "test_command": "npm test",
       "acceptance": "10 recognizable landmark illustrations visible on the map at correct positions. Each has a Korean label. Landmarks are the right size - noticeable but not overwhelming.",
-      "passes": false
+      "passes": true
     },
     {
       "id": "V3-6",

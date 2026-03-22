@@ -17,6 +17,20 @@ Started: Fri Mar 20 17:28:59 KST 2026
   - 북한산 base at y=95 aligns well with northern district tops (y=20-55), peaks at y=-4 to y=38
 ---
 
+## 2026-03-22 - V3-5
+- Added 10 landmark SVG illustrations inline in SeoulSVG component
+- Landmarks: 경복궁(318,158), 남산타워(341,237), 월드컵경기장(205,193), DDP(420,188), 63빌딩(230,330), 국회의사당(210,348), 김포공항(122,268), 코엑스(462,420), 롯데월드타워(532,398), 올림픽공원(548,415)
+- Each landmark uses simple SVG shapes (rect, ellipse, path, polygon) with Korean label underneath (fontSize 6-7px)
+- Rendered after major roads, before children (hotspot markers) - correct z-order
+- Files changed: src/components/SeoulMap.tsx
+- **Learnings for future iterations:**
+  - Landmarks placed as inline `<g transform="translate(x, y)">` blocks with relative coords (centered at 0,0)
+  - 남산타워 sits on top of 남산 group (rendered in same y area); tower at y=237 aligns with hill top
+  - Yeouido landmarks (63빌딩, 국회의사당) placed at y=330-348, just above/in Han River - geographically correct
+  - Songpa landmarks (롯데타워, 올림픽공원) at y=398-415, well south of Han River bottom (~y=390)
+  - Keep label font-size at 6-7px to avoid crowding; use fontWeight=600 for important landmarks
+---
+
 ## Codebase Patterns
 - CharacterSystem uses PixiJS 8 with a ticker loop; LOD switching uses DETAIL_ZOOM_THRESHOLD to switch between dot and full figure rendering
 - Tests mock pixi.js entirely (no WebGL in jsdom), so rendering logic changes don't need separate test coverage beyond existing canvas/render tests
@@ -55,4 +69,17 @@ Started: Fri Mar 20 17:28:59 KST 2026
   - White strokes (strokeWidth 3) on pink districts create crisp illustrated map look
   - District color variation range: #f7e2de (lightest north) → #eac9c4 (most saturated Gangnam)
   - Han River solid fill (#8ec5e8) looks cleaner than gradient for illustrated style
+---
+## 2026-03-22 - V3-4
+- Widened Han River path from ~20px to ~30-40px consistently wide
+- Added wave highlight path along the top bank (subtle #b8dff5 stroke)
+- Added 9 bridges as gray rectangles over the river (양화/마포/원효/한강/반포/한남/성수/영동/잠실대교)
+- Added 청계천 as thin light blue stream (stroke #a0ccec, width 2) through Jung/Jongno/Seongdong
+- Added 중랑천 as thin stream (width 2.5) from Jungnang-gu flowing south into Han River
+- Files changed: src/components/SeoulMap.tsx
+- **Learnings for future iterations:**
+  - Bridges rendered as `<rect x={bx-3} y={topY} width={6} height={botY-topY}` work well at map scale
+  - Streams use fill=none + stroke for thin line style
+  - River top edge now at y≈340-362, bottom at y≈385-400 (use these coords for bridges/landmarks)
+  - Wave highlight: offset top edge path by +5y with lighter stroke opacity 0.5
 ---
