@@ -37,3 +37,24 @@ Started: Fri Mar 20 17:28:59 KST 2026
   - 3D buildings use `fill-extrusion` type; `render_height` is the OpenMapTiles property for height
   - JSON assets in vite are automatically supported; no extra config needed
 ---
+
+## 2026-03-23 - V4-3
+- Updated Location type: replaced x/y (SVG coords) with lng/lat (geographic)
+- Updated LocationRegistry.ts: removed geo2svg(), LOCATIONS now exports raw lng/lat from RAW_LOCATIONS
+- Rewrote HotspotMarker.tsx: new MapLibre-based HotspotLayer (headless component returning null)
+  - GeoJSON source + 3 layers: hotspot-rings, hotspot-circles, hotspot-labels
+  - Data-driven circle-radius/color from congestionMap via CONGESTION_COLOR
+  - Layer-specific click handler fires onSelect(code) + shows Popup with area name
+  - selectedCode updates ring/circle sizes via setPaintProperty
+  - Labels shown at minzoom 12 (symbol layer)
+- Updated MapView.tsx: added onMapLoaded callback prop, fires on map 'load' event
+- Updated App.tsx: mapInstance state (set by onMapLoaded), congestionMap useMemo, HotspotLayer rendered inside map div
+- Updated LocationRegistry.test.ts: tests now check lat/lng bounds instead of SVG x/y coordinates
+- Rewrote HotspotMarker.test.tsx: headless component tests using mock MapLibre Map
+- All 67 tests pass, build succeeds
+- **Learnings for future iterations:**
+  - HotspotLayer is headless (returns null) - tests must mock the MapLibre Map API, not use DOM queries
+  - mapRef ref change doesn't trigger re-renders; use state (mapInstance) from onMapLoaded callback instead
+  - layer-specific map.on('click', layerId, handler) gives e.features[] directly, no need for queryRenderedFeatures
+  - isStyleLoaded() check is needed before addSource/addLayer; fall back to map.on('load', ...) if not ready
+---

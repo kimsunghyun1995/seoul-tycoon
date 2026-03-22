@@ -47,7 +47,7 @@
       "description": "Update LocationRegistry.ts: remove the geo2svg conversion, export raw lat/lng coordinates directly in Location type. Update Location type in types/index.ts to use { lng: number; lat: number } instead of { x: number; y: number }. Create new HotspotMarker system using MapLibre: add 122 markers as a GeoJSON source + circle layer on the map. Circle color based on congestion level (green/yellow/orange/red from constants/colors.ts). Circle radius: 6px base, 10px when selected, with pulse animation via style expressions. On marker click, show area name popup and trigger selection. Selected marker gets a larger highlighted ring. Labels shown on hover or at higher zoom levels. Remove old SVG-based HotspotMarker.tsx.",
       "test_command": "npm test",
       "acceptance": "122 hotspot markers visible on MapLibre map at correct geographic positions. Colors reflect congestion level. Click selects marker and shows name. Selected marker is highlighted.",
-      "passes": false
+      "passes": true
     },
     {
       "id": "V4-4",
