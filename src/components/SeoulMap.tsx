@@ -232,33 +232,29 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
       className="w-full h-full"
       aria-label="서울시 지도"
     >
-      {/* Sky gradient background */}
+      {/* Background - muted sage cream (illustrated tourism map style) */}
       <defs>
-        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#d4f1c0" />
-          <stop offset="100%" stopColor="#e8f8d8" />
-        </linearGradient>
         <linearGradient id="riverGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#a8d8ea" />
-          <stop offset="100%" stopColor="#87c5dc" />
+          <stop offset="0%" stopColor="#9ecfe8" />
+          <stop offset="100%" stopColor="#7ab8d8" />
         </linearGradient>
       </defs>
 
       {/* Background */}
-      <rect width="800" height="700" fill="url(#skyGrad)" />
+      <rect width="800" height="700" fill="#e8e6df" />
 
       {/* Gyeonggi-do surrounding region (simplified, non-interactive) */}
       <path
         d={GYEONGGI_PATH}
-        fill="#c8c8b8"
-        stroke="#aaaaa0"
+        fill="#dddad0"
+        stroke="#c8c4b8"
         strokeWidth="1.5"
-        opacity="0.55"
+        opacity="0.8"
       />
       {/* Gyeonggi-do label in surrounding area */}
-      <text x="90" y="40" textAnchor="middle" fontSize="11" fill="#787870" fontWeight="500" opacity="0.7">경기도</text>
-      <text x="700" y="350" textAnchor="middle" fontSize="11" fill="#787870" fontWeight="500" opacity="0.7">경기도</text>
-      <text x="350" y="668" textAnchor="middle" fontSize="11" fill="#787870" fontWeight="500" opacity="0.7">경기도</text>
+      <text x="90" y="40" textAnchor="middle" fontSize="11" fill="#a09888" fontWeight="500" opacity="0.8">경기도</text>
+      <text x="700" y="350" textAnchor="middle" fontSize="11" fill="#a09888" fontWeight="500" opacity="0.8">경기도</text>
+      <text x="350" y="668" textAnchor="middle" fontSize="11" fill="#a09888" fontWeight="500" opacity="0.8">경기도</text>
 
       {/* Districts - 25 Seoul-gu */}
       {DISTRICTS.map(d => (
@@ -267,9 +263,10 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
           id={d.id}
           d={d.path}
           fill={d.fill}
-          stroke="#b0d8a0"
-          strokeWidth="1.5"
-          opacity="0.9"
+          stroke="white"
+          strokeWidth="3"
+          strokeLinejoin="round"
+          opacity="0.95"
         />
       ))}
 
@@ -281,9 +278,9 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
           y={l.y}
           textAnchor="middle"
           fontSize="9"
-          fill="#4a7c59"
-          fontWeight="600"
-          opacity="0.8"
+          fill="#8b5a52"
+          fontWeight="700"
+          opacity="0.85"
         >
           {l.name}
         </text>
@@ -292,12 +289,12 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
       {/* Han River */}
       <path
         d={HAN_RIVER_PATH}
-        fill="url(#riverGrad)"
-        stroke="#6bb5cc"
+        fill="#8ec5e8"
+        stroke="#6aadd4"
         strokeWidth="1"
-        opacity="0.85"
+        opacity="0.9"
       />
-      <text x="380" y="415" textAnchor="middle" fontSize="11" fill="#4a8fa8" fontWeight="500" opacity="0.7">
+      <text x="380" y="415" textAnchor="middle" fontSize="11" fill="#3a7fa0" fontWeight="600" opacity="0.75">
         한강
       </text>
 
@@ -307,9 +304,9 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
           key={i}
           d={r}
           fill="none"
-          stroke="#c8e0b8"
+          stroke="#e8d8c8"
           strokeWidth="2"
-          opacity="0.6"
+          opacity="0.7"
         />
       ))}
 
@@ -323,57 +320,53 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
 // Districts ordered roughly N→S, W→E
 const DISTRICTS = [
   // Dobong-gu (도봉구) - north
-  { id: 'dobong', fill: '#c8e6c9', path: 'M 370 30 L 420 25 L 450 50 L 440 90 L 400 100 L 365 80 Z' },
+  { id: 'dobong', fill: '#f5ddd8', path: 'M 370 30 L 420 25 L 450 50 L 440 90 L 400 100 L 365 80 Z' },
   // Nowon-gu (노원구) - northeast
-  { id: 'nowon', fill: '#dcedc8', path: 'M 420 25 L 490 20 L 520 55 L 500 95 L 460 105 L 440 90 L 450 50 Z' },
+  { id: 'nowon', fill: '#f7e2de', path: 'M 420 25 L 490 20 L 520 55 L 500 95 L 460 105 L 440 90 L 450 50 Z' },
   // Jungnang-gu (중랑구) - east
-  { id: 'jungnang', fill: '#c8e6c9', path: 'M 490 70 L 530 60 L 545 110 L 510 140 L 480 130 L 470 100 L 500 95 L 520 55 Z' },
+  { id: 'jungnang', fill: '#f2d5d0', path: 'M 490 70 L 530 60 L 545 110 L 510 140 L 480 130 L 470 100 L 500 95 L 520 55 Z' },
   // Gangbuk-gu (강북구) - north center
-  { id: 'gangbuk', fill: '#dcedc8', path: 'M 330 40 L 370 30 L 365 80 L 340 100 L 305 85 L 310 55 Z' },
+  { id: 'gangbuk', fill: '#f7e2de', path: 'M 330 40 L 370 30 L 365 80 L 340 100 L 305 85 L 310 55 Z' },
   // Seongbuk-gu (성북구) - north center
-  { id: 'seongbuk', fill: '#c8e6c9', path: 'M 365 80 L 400 100 L 420 130 L 390 155 L 355 145 L 340 100 Z' },
+  { id: 'seongbuk', fill: '#f2d5d0', path: 'M 365 80 L 400 100 L 420 130 L 390 155 L 355 145 L 340 100 Z' },
   // Eunpyeong-gu (은평구) - northwest
-  { id: 'eunpyeong', fill: '#dcedc8', path: 'M 235 55 L 310 55 L 305 85 L 310 120 L 270 130 L 240 100 L 225 75 Z' },
+  { id: 'eunpyeong', fill: '#f5ddd8', path: 'M 235 55 L 310 55 L 305 85 L 310 120 L 270 130 L 240 100 L 225 75 Z' },
   // Jongno-gu (종로구) - center
-  { id: 'jongno', fill: '#b8dbb8', path: 'M 310 120 L 355 145 L 360 175 L 330 185 L 295 170 L 285 145 L 295 125 Z' },
+  { id: 'jongno', fill: '#f0ccc6', path: 'M 310 120 L 355 145 L 360 175 L 330 185 L 295 170 L 285 145 L 295 125 Z' },
   // Seodaemun-gu (서대문구) - west center
-  { id: 'seodaemun', fill: '#c8e6c9', path: 'M 240 100 L 270 130 L 310 120 L 295 125 L 285 145 L 255 155 L 230 135 L 225 110 Z' },
-  // Dobong extension / Mapo-gu area check
+  { id: 'seodaemun', fill: '#f2d5d0', path: 'M 240 100 L 270 130 L 310 120 L 295 125 L 285 145 L 255 155 L 230 135 L 225 110 Z' },
   // Jung-gu (중구) - center
-  { id: 'jung', fill: '#a5d6a7', path: 'M 330 185 L 360 175 L 380 195 L 365 220 L 335 215 L 320 200 Z' },
-  // Nowon extension
+  { id: 'jung', fill: '#eecbc7', path: 'M 330 185 L 360 175 L 380 195 L 365 220 L 335 215 L 320 200 Z' },
   // Dongdaemun-gu (동대문구) - center east
-  { id: 'dongdaemun', fill: '#dcedc8', path: 'M 390 155 L 430 150 L 445 175 L 420 200 L 390 195 L 380 175 Z' },
+  { id: 'dongdaemun', fill: '#f2d5d0', path: 'M 390 155 L 430 150 L 445 175 L 420 200 L 390 195 L 380 175 Z' },
   // Seongdong-gu (성동구) - center east
-  { id: 'seongdong', fill: '#c8e6c9', path: 'M 420 200 L 460 185 L 480 210 L 465 250 L 430 250 L 405 230 L 400 205 Z' },
+  { id: 'seongdong', fill: '#f0ccc6', path: 'M 420 200 L 460 185 L 480 210 L 465 250 L 430 250 L 405 230 L 400 205 Z' },
   // Gwangjin-gu (광진구) - east
-  { id: 'gwangjin', fill: '#dcedc8', path: 'M 460 185 L 510 175 L 530 210 L 520 250 L 480 255 L 465 250 L 480 210 Z' },
+  { id: 'gwangjin', fill: '#f2d5d0', path: 'M 460 185 L 510 175 L 530 210 L 520 250 L 480 255 L 465 250 L 480 210 Z' },
   // Mapo-gu (마포구) - west
-  { id: 'mapo', fill: '#c8e6c9', path: 'M 195 170 L 255 155 L 285 145 L 295 170 L 300 200 L 270 225 L 240 215 L 210 200 Z' },
+  { id: 'mapo', fill: '#f0ccc6', path: 'M 195 170 L 255 155 L 285 145 L 295 170 L 300 200 L 270 225 L 240 215 L 210 200 Z' },
   // Yongsan-gu (용산구) - center south
-  { id: 'yongsan', fill: '#b8dbb8', path: 'M 295 200 L 335 215 L 365 220 L 375 250 L 350 270 L 310 265 L 295 240 Z' },
+  { id: 'yongsan', fill: '#eecbc7', path: 'M 295 200 L 335 215 L 365 220 L 375 250 L 350 270 L 310 265 L 295 240 Z' },
   // Yangcheon-gu (양천구) - southwest
-  { id: 'yangcheon', fill: '#dcedc8', path: 'M 165 290 L 210 280 L 235 305 L 225 345 L 185 350 L 160 325 Z' },
+  { id: 'yangcheon', fill: '#f2d5d0', path: 'M 165 290 L 210 280 L 235 305 L 225 345 L 185 350 L 160 325 Z' },
   // Gangseo-gu (강서구) - far west
-  { id: 'gangseo', fill: '#c8e6c9', path: 'M 100 250 L 165 240 L 200 265 L 210 300 L 165 310 L 130 300 L 105 275 Z' },
+  { id: 'gangseo', fill: '#f5ddd8', path: 'M 100 250 L 165 240 L 200 265 L 210 300 L 165 310 L 130 300 L 105 275 Z' },
   // Guro-gu (구로구) - southwest
-  { id: 'guro', fill: '#dcedc8', path: 'M 175 350 L 225 345 L 250 370 L 240 405 L 200 410 L 170 390 Z' },
+  { id: 'guro', fill: '#f0ccc6', path: 'M 175 350 L 225 345 L 250 370 L 240 405 L 200 410 L 170 390 Z' },
   // Geumcheon-gu (금천구) - south
-  { id: 'geumcheon', fill: '#c8e6c9', path: 'M 200 410 L 240 405 L 255 430 L 240 460 L 205 455 L 190 430 Z' },
+  { id: 'geumcheon', fill: '#eecbc7', path: 'M 200 410 L 240 405 L 255 430 L 240 460 L 205 455 L 190 430 Z' },
   // Dongjak-gu (동작구) - south center
-  { id: 'dongjak', fill: '#dcedc8', path: 'M 280 365 L 340 360 L 355 395 L 335 425 L 295 425 L 270 400 Z' },
+  { id: 'dongjak', fill: '#f2d5d0', path: 'M 280 365 L 340 360 L 355 395 L 335 425 L 295 425 L 270 400 Z' },
   // Gwanak-gu (관악구) - south
-  { id: 'gwanak', fill: '#c8e6c9', path: 'M 255 430 L 295 425 L 335 425 L 345 460 L 315 485 L 275 480 L 250 455 Z' },
+  { id: 'gwanak', fill: '#eecbc7', path: 'M 255 430 L 295 425 L 335 425 L 345 460 L 315 485 L 275 480 L 250 455 Z' },
   // Seocho-gu (서초구) - south
-  { id: 'seocho', fill: '#b8dbb8', path: 'M 350 380 L 415 375 L 435 415 L 415 455 L 375 460 L 345 440 L 340 405 Z' },
+  { id: 'seocho', fill: '#f0ccc6', path: 'M 350 380 L 415 375 L 435 415 L 415 455 L 375 460 L 345 440 L 340 405 Z' },
   // Gangnam-gu (강남구) - southeast
-  { id: 'gangnam', fill: '#c8e6c9', path: 'M 415 355 L 480 350 L 510 390 L 500 440 L 455 455 L 420 450 L 410 415 Z' },
+  { id: 'gangnam', fill: '#eac9c4', path: 'M 415 355 L 480 350 L 510 390 L 500 440 L 455 455 L 420 450 L 410 415 Z' },
   // Songpa-gu (송파구) - east south
-  { id: 'songpa', fill: '#dcedc8', path: 'M 480 350 L 545 345 L 565 385 L 550 430 L 515 445 L 490 440 L 500 400 Z' },
+  { id: 'songpa', fill: '#f2d5d0', path: 'M 480 350 L 545 345 L 565 385 L 550 430 L 515 445 L 490 440 L 500 400 Z' },
   // Gangdong-gu (강동구) - far east south
-  { id: 'gangdong', fill: '#c8e6c9', path: 'M 530 300 L 580 295 L 600 340 L 580 380 L 545 385 L 520 355 L 525 320 Z' },
-  // Nowon south extension
-  // Jungnang south
+  { id: 'gangdong', fill: '#f0ccc6', path: 'M 530 300 L 580 295 L 600 340 L 580 380 L 545 385 L 520 355 L 525 320 Z' },
 ]
 
 const DISTRICT_LABELS = [
