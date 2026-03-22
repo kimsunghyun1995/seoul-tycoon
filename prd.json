@@ -1,105 +1,85 @@
 {
-  "project": "Seoul Tycoon v3 - Illustrated Map",
-  "description": "Complete visual redesign to illustrated Seoul map style with landmarks, mountains, rivers, bridges, and rich animations",
+  "project": "Seoul Tycoon v4 - MapLibre Snap Map Style",
+  "description": "Replace SVG map with MapLibre GL JS for real geographic map base with Snap Map-style pastel styling and PixiJS character overlay",
   "repository": "https://github.com/kimsunghyun1995/seoul-tycoon",
   "branchName": "main",
   "context": {
     "existing_stack": "React 18 + TypeScript 5 + Vite + PixiJS 8 + Tailwind CSS",
-    "svg_viewbox": "0 0 800 700",
-    "design_reference": "Illustrated Seoul tourism map style: warm pink/beige district fills, white thick border lines between districts, layered green mountains around edges, landmark buildings as simple SVG illustrations, Han River with bridges, scattered trees/parks, tiny cute walking people",
-    "color_palette": {
-      "district_base": "#f2d5d0 (warm pink/beige, like the reference)",
-      "district_border": "white, 3px stroke",
-      "mountains": "layered greens (#5a8c5a, #7aaa6a, #9ac88a) with tree silhouettes",
-      "han_river": "#8ec5e8 (sky blue, wider than current)",
-      "bridges": "#d0d0d0 gray rectangles crossing river",
-      "parks": "#b8d8a0 darker green patches",
-      "trees": "small green circles/teardrops scattered",
-      "buildings": "cream/beige simple rectangles with colored roofs",
-      "landmarks": "simplified but recognizable SVG shapes",
-      "gyeonggi_bg": "#e8e6df (muted sage/cream)",
-      "sky": "not rendered as background - use cream/sage for surrounding area"
+    "new_dependency": "maplibre-gl (open source Mapbox GL JS fork, BSD license)",
+    "tile_source": "OpenStreetMap vector tiles via free tile servers (e.g. https://tiles.openfreemap.org/styles/liberty or https://demotiles.maplibre.org/style.json)",
+    "location_data": "RAW_LOCATIONS in LocationRegistry.ts already has [code, name, lat, lng] for all 122 hotspots",
+    "keep_intact": ["SeoulApiService.ts (data fetching)", "useSeoulData.ts (data hook)", "types/index.ts", "constants/colors.ts", "TopBar.tsx (weather/air badges)", "BottomSheet.tsx (area detail panel)"],
+    "replace_completely": ["SeoulMap.tsx (SVG → MapLibre)", "CharacterSystem.tsx (SVG coords → lng/lat projection)", "HotspotMarker.tsx (SVG markers → MapLibre markers)", "WeatherOverlay.tsx (rebuild for MapLibre overlay)"],
+    "snap_map_style_reference": {
+      "roads": "white or very light cream (#fafafa)",
+      "buildings": "very light beige/lavender (#f0eee8)",
+      "parks": "soft mint green (#d4edda)",
+      "water": "soft sky blue (#c5e3f6)",
+      "background": "pale warm gray (#f5f3ef)",
+      "labels": "muted gray (#888), minimal",
+      "3d_buildings": "subtle extrusion, light shadow"
     },
-    "key_landmarks_with_positions": {
-      "경복궁 (Gyeongbokgung)": "Jongno-gu center - traditional red-roofed palace",
-      "남산타워 (N Seoul Tower)": "Yongsan-gu - tower on mountain",
-      "롯데월드타워 (Lotte World Tower)": "Songpa-gu - tall thin skyscraper",
-      "63빌딩 (63 Building)": "Yeouido/Mapo area - golden tall building",
-      "DDP (동대문디자인플라자)": "Dongdaemun - curved silver building",
-      "국회의사당 (National Assembly)": "Yeouido - domed building",
-      "서울시청 (Seoul City Hall)": "Jung-gu - modern glass building",
-      "코엑스 (COEX)": "Gangnam - large rectangular building",
-      "김포공항 (Gimpo Airport)": "Gangseo-gu far west - airplane icon",
-      "올림픽공원 (Olympic Park)": "Songpa-gu - park with gate",
-      "서울숲 (Seoul Forest)": "Seongdong-gu - dense tree cluster",
-      "월드컵경기장 (World Cup Stadium)": "Mapo-gu - stadium shape",
-      "청계천 (Cheonggyecheon)": "Small stream through Jung-gu/Jongno-gu"
-    },
-    "mountains": {
-      "북한산 (Bukhansan)": "North edge - large layered mountain range",
-      "인왕산 (Inwangsan)": "Northwest, near Jongno",
-      "남산 (Namsan)": "Center-south, where N Tower sits",
-      "관악산 (Gwanaksan)": "South edge",
-      "아차산 (Achasan)": "East edge, near Gangdong",
-      "수락산 (Suraksan)": "Northeast edge"
-    }
+    "seoul_center": { "lng": 126.978, "lat": 37.5665 },
+    "default_zoom": 11,
+    "min_zoom": 9,
+    "max_zoom": 18
   },
   "sub_tasks": [
     {
-      "id": "V3-2",
-      "title": "Complete SeoulMap SVG redesign - district shapes and color palette",
-      "description": "Completely rewrite the SeoulSVG component in SeoulMap.tsx. Change the visual style to match illustrated tourism map references. Changes: (1) District fill color from greens to warm pink/beige tones (#f2d5d0, #f0ccc6, #f5ddd8 etc with subtle variation per district). (2) District borders from thin green strokes to thick WHITE strokes (strokeWidth 3-4, stroke white). (3) Background/Gyeonggi area uses muted sage cream (#e8e6df). (4) Remove the current greenish linearGradient background. (5) Keep the existing district paths but adjust colors. (6) Extend SVG viewBox slightly if needed for mountains at edges. The overall look should shift from 'green terrain map' to 'warm illustrated tourism map'.",
+      "id": "V4-1",
+      "title": "Install MapLibre GL JS and create base map component",
+      "description": "Install maplibre-gl package. Create a new MapView component that replaces SeoulMap. Use MapLibre GL JS to render a full-screen interactive map centered on Seoul (lng: 126.978, lat: 37.5665, zoom: 11). Use a free OpenStreetMap-based vector tile source. For initial setup, use the default style or demotiles. The map should fill the viewport, support smooth zoom/pan/rotate. Export a map ref so other components can access the map instance for coordinate projection. Remove the old SeoulMap.tsx SVG component. Update App.tsx to use MapView instead of SeoulMap. Ensure the map renders correctly with basic styling.",
       "test_command": "npm test",
-      "acceptance": "Districts show warm pink/beige fills with thick white borders. Background is muted sage. Overall color palette matches illustrated Seoul map style.",
+      "acceptance": "MapLibre map renders full screen centered on Seoul. Smooth pan/zoom works. Old SVG map removed. App still builds and core tests pass.",
       "passes": true
     },
     {
-      "id": "V3-3",
-      "title": "Add mountains around Seoul edges",
-      "description": "Add mountain SVG illustrations around the edges of Seoul. Draw mountains as layered curved shapes using 2-3 shades of green (#5a8c5a darker back, #7aaa6a mid, #9ac88a lighter front). Mountains to add: (1) 북한산 (Bukhansan) - large mountain range along the entire NORTH edge, extending above the Seoul boundary. Multiple peaks, largest mountain feature. (2) 인왕산 (Inwangsan) - northwest, smaller range near Jongno/Seodaemun. (3) 남산 (Namsan) - small hill in center-south (Yongsan area), this is where N Tower sits. (4) 관악산 (Gwanaksan) - south edge, moderate size. (5) 아차산 (Achasan) - east edge near Gangdong. (6) 수락산/도봉산 - northeast. Add small triangular tree shapes (dark green) on the mountains using simple SVG polygons or paths. Mountains should overlap district edges slightly, rendered BEHIND districts but extending beyond the Seoul boundary into Gyeonggi area. They should look like layered green hills with depth.",
+      "id": "V4-2",
+      "title": "Create custom pastel Snap Map style",
+      "description": "Create a custom MapLibre style JSON file (src/assets/map-style.json) that transforms the default OSM tiles into a Snap Map-inspired pastel look. Style specifications: (1) Background: pale warm gray #f5f3ef. (2) Roads: white #ffffff with very subtle light gray casing #eee for major roads, thinner for minor. Highway labels hidden or very subtle. (3) Buildings: very light beige/lavender #f0eee8 fill, no stroke. Enable 3D building extrusions at zoom >= 14 with subtle height. (4) Parks/green areas: soft mint #d4edda. (5) Water (Han River, streams): soft sky blue #c5e3f6. (6) Land use areas: very subtle differentiation. (7) Labels: muted gray #999, only show major area names at low zoom, more detail at higher zoom. Use a clean sans-serif font. (8) Overall feel: clean, bright, minimal, pastel - like Snap Map. Import and use this style in MapView component.",
       "test_command": "npm test",
-      "acceptance": "Mountains visible around Seoul's north, south, east edges. Bukhansan is prominently large in the north. Each mountain has 2-3 layered green shades with tree silhouettes. Mountains create a natural border around the city.",
-      "passes": true
+      "acceptance": "Map displays with custom pastel colors. Roads are white, buildings light beige, parks mint green, water sky blue. Overall feel matches Snap Map aesthetic. 3D buildings appear when zoomed in past level 14.",
+      "passes": false
     },
     {
-      "id": "V3-4",
-      "title": "Redesign Han River with bridges and streams",
-      "description": "Redesign the Han River to be wider, more prominent, and include bridges. Changes: (1) Make the river 2x wider than current (about 30-35px SVG width instead of current ~20px). Use a solid sky blue (#8ec5e8) fill. (2) Add subtle wave pattern using a SVG path with slight undulations along the river edges. (3) Add 8-10 bridge crossings as small gray rectangles perpendicular to the river flow at realistic positions (Banpo, Hannam, Dongjak, Mapo, Yeongdong, Jamsil, Seongsu, Yangwha bridges etc). Bridges should be thin gray lines (#c0c0c0) with slightly wider ends. (4) Add 청계천 (Cheonggyecheon) as a thin light blue stream flowing east through Jung-gu/Jongno area. (5) Add 중랑천 as thin stream in Jungnang-gu area flowing into Han River. River should feel like a major geographic feature dividing the city.",
+      "id": "V4-3",
+      "title": "Update LocationRegistry to export lat/lng and adapt HotspotMarkers",
+      "description": "Update LocationRegistry.ts: remove the geo2svg conversion, export raw lat/lng coordinates directly in Location type. Update Location type in types/index.ts to use { lng: number; lat: number } instead of { x: number; y: number }. Create new HotspotMarker system using MapLibre: add 122 markers as a GeoJSON source + circle layer on the map. Circle color based on congestion level (green/yellow/orange/red from constants/colors.ts). Circle radius: 6px base, 10px when selected, with pulse animation via style expressions. On marker click, show area name popup and trigger selection. Selected marker gets a larger highlighted ring. Labels shown on hover or at higher zoom levels. Remove old SVG-based HotspotMarker.tsx.",
       "test_command": "npm test",
-      "acceptance": "Han River is wide and prominent sky blue. 8+ bridges cross the river. Cheonggyecheon stream visible as thin blue line in central Seoul. River is a dominant visual feature of the map.",
-      "passes": true
+      "acceptance": "122 hotspot markers visible on MapLibre map at correct geographic positions. Colors reflect congestion level. Click selects marker and shows name. Selected marker is highlighted.",
+      "passes": false
     },
     {
-      "id": "V3-5",
-      "title": "Add landmark illustrations as SVG",
-      "description": "Add simplified but recognizable landmark SVG illustrations at their correct positions on the map. Each landmark should be 30-60px in size, drawn with simple SVG shapes (rects, paths, circles). Landmarks to add: (1) 경복궁 - traditional Korean palace: red/brown roof (curved trapezoid) on beige base, at Jongno ~(320, 160). (2) 남산타워 - tower on green hill: thin tall gray tower with observation deck bulge, at ~(340, 250). (3) 롯데월드타워 - very tall thin modern skyscraper, slight taper, at Songpa ~(530, 370). (4) 63빌딩 - golden rectangular tall building near Yeouido ~(225, 310). (5) DDP - curved silver/gray organic shape at Dongdaemun ~(420, 190). (6) 국회의사당 - building with green dome at Yeouido ~(210, 330). (7) 코엑스 - large gray rectangle building at Gangnam ~(460, 400). (8) 김포공항 - small airplane icon with runway at Gangseo ~(120, 270). (9) 월드컵경기장 - oval stadium shape at Mapo ~(205, 195). (10) 올림픽공원 - park gate icon at Songpa ~(545, 410). Each landmark gets a small Korean label underneath in 7-8px font. Landmarks are rendered ABOVE districts but BELOW hotspot markers.",
+      "id": "V4-4",
+      "title": "Adapt PixiJS CharacterSystem for MapLibre coordinate projection",
+      "description": "Rewrite CharacterSystem to overlay on MapLibre and use geographic coordinates. Key changes: (1) Position the PixiJS canvas absolutely over the MapLibre canvas. (2) On each animation frame, use map.project(lngLat) to convert each character's home location (lng/lat) to screen pixels. (3) Characters walk within a pixel radius around their projected home position. (4) On map move/zoom events, update all character positions by re-projecting. (5) Keep the existing tiny character rendering (V3-1 dot style). (6) Keep population-proportional character counts (1 per 100 people, max 500). (7) Handle viewport culling: only render characters whose projected position is within the visible screen bounds. (8) The canvas should resize with the map container. (9) Pass map ref from MapView to CharacterSystem via props or context.",
       "test_command": "npm test",
-      "acceptance": "10 recognizable landmark illustrations visible on the map at correct positions. Each has a Korean label. Landmarks are the right size - noticeable but not overwhelming.",
-      "passes": true
+      "acceptance": "Tiny characters walk around at correct geographic positions on the MapLibre map. Characters move correctly when map is panned/zoomed. Only visible characters are rendered. Performance smooth with 1000+ characters.",
+      "passes": false
     },
     {
-      "id": "V3-6",
-      "title": "Add trees, parks, and environmental details",
-      "description": "Scatter environmental SVG elements across the map for visual richness: (1) Trees: 60-80 small tree icons scattered across the map, concentrated in park areas and along rivers. Each tree is a simple green circle (3-5px radius) on a thin brown stem (1px line). Use 2-3 shades of green for variety. (2) Park areas: Fill known park regions with slightly darker green (#b5d89a) patches: 올림픽공원 area, 서울숲 (near Seongdong), 여의도공원, 월드컵공원, 보라매공원. (3) Seoul Forest (서울숲): Dense cluster of 15-20 trees in Seongdong-gu area. (4) Small flower/bush icons (tiny colored dots) scattered in park areas for spring feel. (5) Road patterns: Add a few more subtle road lines in cream/light color to fill empty district interiors. Trees should be rendered above districts but below landmarks and hotspot markers. Create a reusable Tree SVG component that takes (x, y, size, shade) props.",
+      "id": "V4-5",
+      "title": "Rebuild WeatherOverlay for MapLibre",
+      "description": "Rebuild weather effects to work as an overlay on the MapLibre map. (1) Sky/tint layer: semi-transparent div overlay on top of map that applies color tint based on weather state and time of day. Day/night cycle: day(07-17) no tint, sunset(17-19) warm orange tint, night(19-05) dark navy overlay with stars + moon, dawn(05-07) soft pink. (2) Rain: canvas overlay with 150+ rain streak particles, clearly visible (opacity 0.6+). (3) Snow: 80+ wobbling snowflakes on canvas. (4) Dust: amber haze overlay. (5) Clear: sun glow element with rotating rays (CSS animation). Clouds drifting. (6) All weather overlays use pointer-events:none so map interaction works through them. (7) Night mode: also apply a CSS filter (brightness 0.7) on the map container to dim the map at night.",
       "test_command": "npm test",
-      "acceptance": "60+ trees scattered across the map. Park areas have denser tree clusters and darker green fills. Map feels lush and alive rather than empty.",
-      "passes": true
+      "acceptance": "Weather effects clearly visible over the map. Rain/snow particles render. Day/night tint changes based on current time. Map remains interactive through overlays.",
+      "passes": false
     },
     {
-      "id": "V3-7",
-      "title": "Fix zoom - smoother zoom and proper limits",
-      "description": "Fix the zoom system: (1) Lower minScale multiplier from 0.92 to 0.65 so users can zoom out to see full map + mountains + Gyeonggi. (2) Increase wheel zoom factor from 1.1/0.9 to 1.15/0.85 for more responsive zoom. (3) Use requestAnimationFrame-based smooth zoom interpolation instead of CSS transitions (which can lag). Store target transform and lerp toward it each frame. (4) Ensure zoom-toward-cursor works correctly with the new map dimensions. (5) Double-click zoom should animate smoothly over 300ms. (6) Reset view button should be clearly visible (bottom-right, round white button with a home icon emoji).",
-      "test_command": "npm test",
-      "acceptance": "Zoom out shows full map including mountains and Gyeonggi. Zoom in/out is smooth and responsive. Double-click zooms smoothly. Reset button clearly visible and works.",
-      "passes": true
+      "id": "V4-6",
+      "title": "Wire up App.tsx and integrate all components",
+      "description": "Update App.tsx to wire everything together with the new MapLibre-based architecture. (1) MapView renders the map and exposes a ref to the maplibre.Map instance. (2) CharacterSystem receives map ref and renders PixiJS overlay. (3) HotspotMarkers are managed as MapLibre layers inside MapView. (4) WeatherOverlay renders on top of everything. (5) TopBar and BottomSheet remain as-is, receiving data from useSeoulData. (6) On hotspot click (from MapLibre layer), update selectedCode state → BottomSheet shows details. (7) Loading overlay and error banner work as before. (8) Ensure all data flow works: API fetch → populate markers + characters → auto-refresh every 5 min.",
+      "test_command": "npm run build && npm test",
+      "acceptance": "Full app works end-to-end: map renders, hotspots colored by congestion, characters walk around, weather animates, clicking hotspot shows bottom sheet with details, data refreshes automatically.",
+      "passes": false
     },
     {
-      "id": "V3-8",
-      "title": "Weather and day/night animation overhaul",
-      "description": "Completely rewrite WeatherOverlay for impressive visual effects. (1) DAY/NIGHT: Based on current hour - day(07-17) bright, sunset(17-19) warm orange tint, night(19-05) dark overlay with stars and moon, dawn(05-07) soft pink. Apply as a semi-transparent overlay that tints the entire scene. At night: add 30-40 twinkling star dots (white, CSS animation varying opacity), crescent moon SVG in top-right. (2) CLEAR weather: Animated sun with rotating ray lines (CSS rotate animation), soft warm glow. Fluffy clouds (2-3) drifting slowly using CSS translateX animation. (3) RAIN: 150+ rain streak particles on canvas, darker sky overlay, cloud layer at top. Rain streaks should be clearly visible (opacity 0.6+). (4) SNOW: 80+ snowflakes with wobble drift, varying sizes 2-8px, gentle falling speed. (5) DUST: Heavy amber haze overlay (opacity 0.3), floating dust motes. (6) Weather overlay opacity should be 0.5-0.8 for particles layer (clearly visible). Sky tint overlay should be 0.2-0.4 (tints but doesn't hide map). (7) Smooth 1s crossfade between weather states.",
-      "test_command": "npm test",
-      "acceptance": "Weather effects are clearly visible and impressive. Night shows stars and moon with dark tint. Rain has dense visible streaks. Snow is gentle and beautiful. Sun has animated rays. Day/night cycle reflects actual time.",
-      "passes": true
+      "id": "V4-7",
+      "title": "Polish and cleanup",
+      "description": "Final polish pass: (1) Remove all unused SVG-related code, old SeoulMap districts/mountains/landmarks/trees data. (2) Add Seoul boundary outline on the map as a subtle GeoJSON polygon layer (light dashed line) to visually define the coverage area. (3) Add map controls: zoom +/- buttons (bottom-right, small pastel-styled), compass/north indicator. (4) Smooth initial fly-in animation when map loads (MapLibre flyTo from zoom 9 to 11 over 2 seconds). (5) Ensure mobile responsiveness: touch gestures work, UI elements don't overlap. (6) Update README with new setup instructions mentioning MapLibre. (7) Clean up any unused dependencies.",
+      "test_command": "npm run build && npm test",
+      "acceptance": "No dead code remaining. Map has zoom controls and compass. Initial load has smooth fly-in animation. Mobile touch works properly. README updated.",
+      "passes": false
     }
   ],
   "test_commands": {
