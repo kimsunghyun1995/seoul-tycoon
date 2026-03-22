@@ -59,7 +59,7 @@
       "description": "Add mountain SVG illustrations around the edges of Seoul. Draw mountains as layered curved shapes using 2-3 shades of green (#5a8c5a darker back, #7aaa6a mid, #9ac88a lighter front). Mountains to add: (1) 북한산 (Bukhansan) - large mountain range along the entire NORTH edge, extending above the Seoul boundary. Multiple peaks, largest mountain feature. (2) 인왕산 (Inwangsan) - northwest, smaller range near Jongno/Seodaemun. (3) 남산 (Namsan) - small hill in center-south (Yongsan area), this is where N Tower sits. (4) 관악산 (Gwanaksan) - south edge, moderate size. (5) 아차산 (Achasan) - east edge near Gangdong. (6) 수락산/도봉산 - northeast. Add small triangular tree shapes (dark green) on the mountains using simple SVG polygons or paths. Mountains should overlap district edges slightly, rendered BEHIND districts but extending beyond the Seoul boundary into Gyeonggi area. They should look like layered green hills with depth.",
       "test_command": "npm test",
       "acceptance": "Mountains visible around Seoul's north, south, east edges. Bukhansan is prominently large in the north. Each mountain has 2-3 layered green shades with tree silhouettes. Mountains create a natural border around the city.",
-      "passes": false
+      "passes": true
     },
     {
       "id": "V3-4",

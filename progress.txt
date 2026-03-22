@@ -2,12 +2,28 @@
 Started: Fri Mar 20 17:28:59 KST 2026
 ---
 
+## 2026-03-22 - V3-3
+- Added 5 mountain groups to SeoulSVG: 북한산/도봉산/수락산 (north), 인왕산 (NW), 관악산 (south), 아차산 (east), 남산 (center)
+- Each mountain uses 3 layered paths: dark (#4a7a4a) → mid (#6a9c5c) → light (#88b87a)
+- Tree silhouettes: small polygon triangles scattered along mountain ridges (#2a5a2a)
+- Edge mountains (북한산, 관악산, 아차산) rendered BEFORE districts (behind them, visible in Gyeonggi area)
+- 남산 rendered AFTER districts (above them, opacity 0.78) for visibility inside Seoul
+- 인왕산 rendered behind districts, mostly hidden by Eunpyeong district - subtle
+- Files changed: src/components/SeoulMap.tsx
+- **Learnings for future iterations:**
+  - Mountains outside Seoul boundary → render before DISTRICTS (behind them, visible in margin)
+  - Mountains inside Seoul (남산) → render after DISTRICTS with opacity ~0.75-0.8 for visibility
+  - Tree silhouette: `<polygon points="cx,top cx-4,top+9 cx+4,top+9" />` works well at this map scale
+  - 북한산 base at y=95 aligns well with northern district tops (y=20-55), peaks at y=-4 to y=38
+---
+
 ## Codebase Patterns
 - CharacterSystem uses PixiJS 8 with a ticker loop; LOD switching uses DETAIL_ZOOM_THRESHOLD to switch between dot and full figure rendering
 - Tests mock pixi.js entirely (no WebGL in jsdom), so rendering logic changes don't need separate test coverage beyond existing canvas/render tests
 - All visual dimension changes in CharacterSystem are in createCharacterGraphics, drawLegs, and the dot fallback block in the ticker loop
 - SeoulMap.tsx contains SeoulSVG (inner component), DISTRICTS array, DISTRICT_LABELS, HAN_RIVER_PATH, MAJOR_ROADS, GYEONGGI_PATH constants
 - SVG tests only check for element presence/text content, not colors - color/style changes are safe to make without breaking tests
+- Mountains: edge mountains rendered before DISTRICTS (behind them); interior mountains (남산) rendered after DISTRICTS with opacity ~0.78
 
 ---
 
