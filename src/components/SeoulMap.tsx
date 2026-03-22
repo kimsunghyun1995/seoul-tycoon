@@ -421,6 +421,97 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
         />
       ))}
 
+      {/* === LANDMARKS (above districts, below hotspot markers) === */}
+
+      {/* 경복궁 (Gyeongbokgung Palace) - Jongno-gu */}
+      <g transform="translate(318, 158)">
+        <rect x="-13" y="-6" width="26" height="10" fill="#d8c99a" stroke="#8b6a3a" strokeWidth="0.5" />
+        <rect x="-10" y="-10" width="20" height="6" fill="#c4b080" stroke="#7a5a2a" strokeWidth="0.5" />
+        <path d="M -15,-10 C -8,-22 8,-22 15,-10 Z" fill="#b84040" stroke="#8b2a2a" strokeWidth="0.5" />
+        <line x1="-15" y1="-10" x2="15" y2="-10" stroke="#8b2a2a" strokeWidth="0.8" />
+        <text x="0" y="12" textAnchor="middle" fontSize="7" fill="#6b3a28" fontWeight="600">경복궁</text>
+      </g>
+
+      {/* 남산타워 (N Seoul Tower) - on top of 남산 */}
+      <g transform="translate(341, 237)">
+        <rect x="-2.5" y="-28" width="5" height="22" fill="#909090" />
+        <rect x="-5" y="-32" width="10" height="7" fill="#b0b0b8" rx="1" />
+        <rect x="-3" y="-36" width="6" height="5" fill="#c0c0c8" rx="0.5" />
+        <line x1="0" y1="-36" x2="0" y2="-43" stroke="#787880" strokeWidth="1.5" />
+        <text x="0" y="-1" textAnchor="middle" fontSize="6" fill="#505060">남산타워</text>
+      </g>
+
+      {/* 월드컵경기장 (World Cup Stadium) - Mapo-gu */}
+      <g transform="translate(205, 193)">
+        <ellipse cx="0" cy="0" rx="14" ry="9" fill="none" stroke="#a0a098" strokeWidth="2.5" />
+        <ellipse cx="0" cy="0" rx="10" ry="6" fill="#7ab870" opacity="0.75" />
+        <path d="M -14,0 C -14,-14 14,-14 14,0" fill="none" stroke="#c8b870" strokeWidth="2" />
+        <text x="0" y="18" textAnchor="middle" fontSize="6" fill="#506040">월드컵경기장</text>
+      </g>
+
+      {/* DDP (동대문디자인플라자) - Dongdaemun-gu */}
+      <g transform="translate(420, 188)">
+        <path d="M -13,5 C -16,-6 -9,-16 0,-15 C 9,-14 15,-4 13,5 Z" fill="#c4c8cc" stroke="#a0a8b0" strokeWidth="0.5" />
+        <path d="M -9,3 C -11,-4 -6,-11 0,-11 C 6,-11 10,-3 8,3" fill="none" stroke="#e0e4e8" strokeWidth="1.2" />
+        <text x="0" y="13" textAnchor="middle" fontSize="7" fill="#506070" fontWeight="600">DDP</text>
+      </g>
+
+      {/* 63빌딩 (63 Building) - Yeouido area */}
+      <g transform="translate(230, 330)">
+        <rect x="-5" y="-32" width="10" height="32" fill="#d4b030" stroke="#a88820" strokeWidth="0.5" />
+        <line x1="-5" y1="-22" x2="5" y2="-22" stroke="#a88820" strokeWidth="0.5" />
+        <line x1="-5" y1="-12" x2="5" y2="-12" stroke="#a88820" strokeWidth="0.5" />
+        <rect x="-3" y="-35" width="6" height="4" fill="#c4a030" />
+        <text x="0" y="9" textAnchor="middle" fontSize="6" fill="#806010">63빌딩</text>
+      </g>
+
+      {/* 국회의사당 (National Assembly) - Yeouido */}
+      <g transform="translate(210, 348)">
+        <rect x="-13" y="-4" width="26" height="9" fill="#d4d0c4" stroke="#a8a498" strokeWidth="0.5" />
+        <line x1="-9" y1="-4" x2="-9" y2="-13" stroke="#b0a898" strokeWidth="1.5" />
+        <line x1="9" y1="-4" x2="9" y2="-13" stroke="#b0a898" strokeWidth="1.5" />
+        <rect x="-12" y="-15" width="24" height="4" fill="#c8c4b8" stroke="#a0a098" strokeWidth="0.5" />
+        <ellipse cx="0" cy="-18" rx="8" ry="6" fill="#4a7a50" stroke="#3a6040" strokeWidth="0.5" />
+        <text x="0" y="13" textAnchor="middle" fontSize="6" fill="#506040">국회의사당</text>
+      </g>
+
+      {/* 김포공항 (Gimpo Airport) - Gangseo-gu */}
+      <g transform="translate(122, 268)">
+        <rect x="-14" y="-2" width="28" height="4" fill="#d0d0c4" rx="1" stroke="#b0b0a0" strokeWidth="0.5" />
+        <line x1="-8" y1="0" x2="8" y2="0" stroke="white" strokeWidth="0.8" strokeDasharray="3,2" />
+        <rect x="-8" y="-10" width="16" height="8" fill="#c8c4b4" stroke="#a0a090" strokeWidth="0.5" rx="1" />
+        <rect x="-6" y="-9" width="12" height="5" fill="#e0dcd0" rx="0.5" />
+        <text x="0" y="11" textAnchor="middle" fontSize="6" fill="#505858">김포공항</text>
+      </g>
+
+      {/* 코엑스 (COEX) - Gangnam-gu */}
+      <g transform="translate(462, 420)">
+        <rect x="-16" y="-12" width="32" height="18" fill="#b8bcc8" stroke="#9098a8" strokeWidth="0.5" />
+        <line x1="-16" y1="-5" x2="16" y2="-5" stroke="#9098a8" strokeWidth="0.5" />
+        <line x1="0" y1="-12" x2="0" y2="6" stroke="#9098a8" strokeWidth="0.5" />
+        <rect x="-16" y="-16" width="32" height="5" fill="#c8ccd8" stroke="#9098a8" strokeWidth="0.5" />
+        <text x="0" y="14" textAnchor="middle" fontSize="7" fill="#506070" fontWeight="600">코엑스</text>
+      </g>
+
+      {/* 롯데월드타워 (Lotte World Tower) - Songpa-gu */}
+      <g transform="translate(532, 398)">
+        <polygon points="-4,0 4,0 2.5,-30 -2.5,-30" fill="#c8ccd8" stroke="#a0a8b8" strokeWidth="0.5" />
+        <polygon points="-2.5,-30 2.5,-30 1,-42 -1,-42" fill="#d8dce8" stroke="#a0a8b8" strokeWidth="0.5" />
+        <line x1="0" y1="-42" x2="0" y2="-48" stroke="#909098" strokeWidth="1.2" />
+        <text x="0" y="9" textAnchor="middle" fontSize="6" fill="#605070">롯데타워</text>
+      </g>
+
+      {/* 올림픽공원 (Olympic Park) - Songpa-gu */}
+      <g transform="translate(548, 415)">
+        <rect x="-10" y="-15" width="4" height="14" fill="#8b6a40" />
+        <rect x="6" y="-15" width="4" height="14" fill="#8b6a40" />
+        <rect x="-13" y="-17" width="26" height="4" fill="#8b6a40" />
+        <path d="M -13,-17 C -13,-25 13,-25 13,-17" fill="#c04040" stroke="#8b2a2a" strokeWidth="0.5" />
+        <circle cx="-4" cy="3" r="4" fill="#5a9050" opacity="0.85" />
+        <circle cx="4" cy="3" r="4" fill="#6aaa60" opacity="0.85" />
+        <text x="0" y="16" textAnchor="middle" fontSize="6" fill="#406030">올림픽공원</text>
+      </g>
+
       {/* Children overlay (e.g. hotspot markers) */}
       {children}
     </svg>
