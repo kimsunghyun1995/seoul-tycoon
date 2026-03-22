@@ -421,6 +421,30 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
         />
       ))}
 
+      {/* === PARKS & TREES (above roads, below landmarks) === */}
+      {PARK_PATCHES.map((p, i) => (
+        <g key={`park-${i}`}>
+          <ellipse cx={p.cx} cy={p.cy} rx={p.rx} ry={p.ry} fill="#b5d89a" opacity="0.65" />
+          {p.label && (
+            <text x={p.lx} y={p.ly} textAnchor="middle" fontSize="6" fill="#3a6030" opacity="0.8">{p.label}</text>
+          )}
+        </g>
+      ))}
+      {TREES.map(([cx, cy, s], i) => (
+        <g key={`tree-${i}`}>
+          <line x1={cx} y1={cy + 3.5} x2={cx} y2={cy + 9} stroke="#7a5030" strokeWidth="1" />
+          <circle cx={cx} cy={cy} r={3.5} fill={TREE_SHADES[s]} />
+        </g>
+      ))}
+      {/* Spring flower dots in park areas */}
+      {([
+        [446,230,'#f8a0b0'],[454,226,'#f0c0d0'],[462,220,'#f8a0b0'],
+        [542,420,'#f8a0b0'],[552,418,'#f0c0d0'],[560,412,'#f8a0b0'],
+        [234,336,'#f8c8d8'],[244,330,'#f8a0b0'],
+      ] as [number, number, string][]).map(([x, y, fill], i) => (
+        <circle key={`flower-${i}`} cx={x} cy={y} r={1.8} fill={fill} opacity="0.8" />
+      ))}
+
       {/* === LANDMARKS (above districts, below hotspot markers) === */}
 
       {/* 경복궁 (Gyeongbokgung Palace) - Jongno-gu */}
@@ -517,6 +541,58 @@ function SeoulSVG({ children }: { children?: ReactNode }) {
     </svg>
   )
 }
+
+const TREE_SHADES = ['#5a9050', '#6aaa60', '#7fc468'] as const
+
+interface ParkPatch {
+  cx: number; cy: number; rx: number; ry: number
+  label?: string; lx?: number; ly?: number
+}
+const PARK_PATCHES: ParkPatch[] = [
+  { cx: 450, cy: 220, rx: 28, ry: 18, label: '서울숲', lx: 450, ly: 242 },
+  { cx: 548, cy: 415, rx: 22, ry: 15 },
+  { cx: 238, cy: 330, rx: 20, ry: 12 },
+  { cx: 185, cy: 193, rx: 18, ry: 12 },
+  { cx: 300, cy: 458, rx: 18, ry: 12, label: '보라매공원', lx: 300, ly: 474 },
+]
+
+// [cx, cy, shadeIndex]
+const TREES: Array<[number, number, number]> = [
+  // 서울숲 cluster
+  [442,216,0],[450,210,1],[458,216,0],[446,224,2],[454,222,1],[462,214,0],
+  [440,226,1],[456,228,2],[448,208,0],[464,220,1],[436,220,2],[460,226,0],
+  [452,214,1],[444,222,0],[468,216,2],
+  // 올림픽공원 cluster
+  [540,408,0],[548,404,1],[556,410,0],[544,418,2],[552,416,1],
+  [560,408,0],[536,416,1],[560,418,2],[542,412,0],[556,414,1],
+  // 여의도공원 cluster (above river, y<340)
+  [230,328,0],[238,322,1],[246,328,0],[234,334,2],[242,332,1],
+  [226,332,0],[250,324,1],[240,336,2],
+  // 월드컵공원 cluster
+  [178,190,0],[186,184,1],[194,190,0],[182,196,2],[190,186,1],
+  [176,196,0],[198,194,1],[184,200,2],
+  // 보라매공원 cluster
+  [292,452,0],[300,446,1],[308,452,0],[296,460,2],[304,458,1],
+  [284,456,0],[312,450,1],[288,464,2],[308,460,0],
+  // Along Cheonggyecheon
+  [358,213,1],[368,216,0],[378,214,2],[388,212,1],
+  // Near Jongno
+  [308,148,0],[320,152,1],[330,146,2],
+  // Jungnang/Seongbuk
+  [520,120,0],[528,125,1],[514,130,2],
+  // Gangnam/Seocho scattered
+  [480,442,0],[490,452,1],[470,448,2],[502,444,0],[400,452,1],[410,462,0],
+  // Gangdong
+  [580,442,0],[590,446,1],[570,448,2],
+  // South bank of river
+  [340,422,0],[355,425,1],[370,420,2],
+  // Nowon (below mountains)
+  [480,96,0],[492,100,1],[503,92,2],
+  // Eunpyeong
+  [252,115,0],[260,120,1],
+  // Mapo scattered
+  [258,195,0],[266,202,1],
+]
 
 // Seoul districts with approximate SVG paths (800x700 viewport)
 // Districts ordered roughly N→S, W→E
