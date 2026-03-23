@@ -5,7 +5,7 @@ const SEOUL_API_KEY = Deno.env.get("SEOUL_API_KEY") ?? ""
 
 // In-memory cache: key → { data, expiry }
 const cache = new Map<string, { data: string; expiry: number }>()
-const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+const CACHE_TTL_MS = 10 * 60 * 1000 // 10 minutes
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,7 +43,7 @@ Deno.serve(async (req: Request) => {
           ...corsHeaders,
           "Content-Type": "application/json",
           "X-Cache": "HIT",
-          "Cache-Control": "public, max-age=300",
+          "Cache-Control": "public, max-age=600",
         },
       })
     }
@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
         ...corsHeaders,
         "Content-Type": "application/json",
         "X-Cache": "MISS",
-        "Cache-Control": "public, max-age=300",
+        "Cache-Control": "public, max-age=600",
       },
     })
   } catch (err) {

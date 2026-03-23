@@ -4,7 +4,7 @@ import { fetchWithCorsProxy, getSeoulApiBase, delay } from './corsProxy'
 const { base: API_BASE, includeApiKey: INCLUDE_API_KEY } = getSeoulApiBase()
 const CONCURRENCY_LIMIT = import.meta.env.DEV ? 5 : 3
 const BATCH_DELAY_MS = import.meta.env.DEV ? 0 : 500
-const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+const CACHE_TTL_MS = 10 * 60 * 1000 // 10 minutes
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parsePopulation(raw: any): PopulationData | null {

@@ -4,7 +4,7 @@ import { LOCATIONS, LOCATION_BY_NAME } from '../services/LocationRegistry'
 import type { AreaData, CongestionLevel } from '../types'
 
 const AREA_NAMES = LOCATIONS.map(l => l.name)
-const REFRESH_INTERVAL = 5 * 60 * 1000
+const REFRESH_INTERVAL = 10 * 60 * 1000 // 10 minutes
 
 export interface SeoulDataState {
   data: Map<string, AreaData>
