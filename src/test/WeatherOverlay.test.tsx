@@ -56,19 +56,21 @@ describe('WeatherOverlay', () => {
     expect(screen.getByTestId('weather-overlay')).toBeInTheDocument()
   })
 
-  it('shows sun glow in clear weather', () => {
+  it('overlay is transparent for clear weather', () => {
     render(<WeatherOverlay weather={makeWeather({ skyStatus: '맑음' })} />)
-    expect(screen.getByTestId('sun-glow')).toBeInTheDocument()
+    const overlay = screen.getByTestId('weather-overlay')
+    expect(overlay).toHaveStyle({ opacity: '0' })
+  })
+
+  it('overlay is visible for rain', () => {
+    render(<WeatherOverlay weather={makeWeather({ precipitationType: '비' })} />)
+    const overlay = screen.getByTestId('weather-overlay')
+    expect(overlay).toHaveStyle({ opacity: '1' })
   })
 
   it('shows dust haze for high PM2.5', () => {
     render(<WeatherOverlay weather={makeWeather({ pm25: 100 })} />)
     expect(screen.getByTestId('dust-haze')).toBeInTheDocument()
-  })
-
-  it('shows clouds for cloudy weather', () => {
-    render(<WeatherOverlay weather={makeWeather({ skyStatus: '흐림' })} />)
-    expect(screen.getAllByTestId('cloud').length).toBeGreaterThan(0)
   })
 
   it('sets correct sky-state data attribute', () => {
@@ -78,6 +80,11 @@ describe('WeatherOverlay', () => {
 
   it('shows particle canvas for rain', () => {
     render(<WeatherOverlay weather={makeWeather({ precipitationType: '비' })} />)
+    expect(screen.getByTestId('particle-canvas')).toBeInTheDocument()
+  })
+
+  it('shows particle canvas for snow', () => {
+    render(<WeatherOverlay weather={makeWeather({ precipitationType: '눈' })} />)
     expect(screen.getByTestId('particle-canvas')).toBeInTheDocument()
   })
 })

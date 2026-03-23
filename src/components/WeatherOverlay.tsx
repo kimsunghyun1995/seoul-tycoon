@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import type { WeatherData } from '../types'
 
 type WeatherState = 'clear' | 'cloudy' | 'rain' | 'snow' | 'dust'
@@ -23,23 +23,6 @@ function getDayPeriod(hour: number): DayPeriod {
   if (hour >= 19 || hour < 5) return 'night'
   return 'dawn'
 }
-
-const DAY_TINTS: Record<DayPeriod, string> = {
-  day: 'rgba(255, 255, 255, 0)',
-  sunset: 'rgba(255, 130, 50, 0.22)',
-  night: 'rgba(8, 15, 55, 0.52)',
-  dawn: 'rgba(255, 170, 160, 0.18)',
-}
-
-// Fixed star positions generated once at module load
-const STARS = Array.from({ length: 36 }, (_, i) => ({
-  id: i,
-  x: (i * 37.3 + 11) % 100,
-  y: (i * 13.7 + 3) % 38,
-  size: 1 + (i % 3),
-  delay: (i * 0.41) % 3,
-  duration: 1.5 + (i % 5) * 0.4,
-}))
 
 interface Particle {
   x: number
@@ -91,12 +74,11 @@ interface WeatherOverlayProps {
 
 export default function WeatherOverlay({ weather }: WeatherOverlayProps) {
   const skyState = getSkyState(weather)
-  const [hour] = useState(() => new Date().getHours())
-  const dayPeriod = getDayPeriod(hour)
   const particlesRef = useRef<Particle[]>([])
   const animRef = useRef<number>(0)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  // Only create particles for rain/snow/dust — clear/cloudy show nothing
   useEffect(() => {
     if (skyState === 'rain') {
       particlesRef.current = createRainParticles(160)
@@ -199,6 +181,9 @@ export default function WeatherOverlay({ weather }: WeatherOverlayProps) {
     }
   }, [skyState])
 
+  // Don't render overlay at all for clear/cloudy weather
+  const hasEffect = skyState === 'rain' || skyState === 'snow' || skyState === 'dust'
+
   return (
     <div
       data-testid="weather-overlay"
@@ -208,143 +193,29 @@ export default function WeatherOverlay({ weather }: WeatherOverlayProps) {
         inset: 0,
         pointerEvents: 'none',
         zIndex: 1,
+        opacity: hasEffect ? 1 : 0,
       }}
     >
-      {/* Day/Night sky tint */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: DAY_TINTS[dayPeriod],
-          transition: 'background 1s ease',
-          zIndex: 0,
-        }}
-      />
-
-      {/* Night: stars */}
-      {dayPeriod === 'night' &&
-        STARS.map(star => (
-          <div
-            key={star.id}
-            data-testid="star"
-            style={{
-              position: 'absolute',
-              left: `${star.x}%`,
-              top: `${star.y}%`,
-              width: star.size,
-              height: star.size,
-              borderRadius: '50%',
-              background: 'white',
-              animation: `starTwinkle ${star.duration}s ${star.delay}s ease-in-out infinite`,
-              zIndex: 1,
-            }}
-          />
-        ))
-      }
-
-      {/* Night: crescent moon */}
-      {dayPeriod === 'night' && (
-        <svg
-          data-testid="moon"
-          style={{ position: 'absolute', top: '4%', right: '7%', zIndex: 1, opacity: 0.92 }}
-          width="34" height="34" viewBox="0 0 34 34"
-        >
-          <path
-            d="M21 3 A13 13 0 1 0 21 31 A9 9 0 1 1 21 3Z"
-            fill="#fffae0"
-          />
-        </svg>
-      )}
-
-      {/* Clear: animated sun with rotating rays - always render for test compatibility */}
-      {skyState === 'clear' && (
-        <div
-          data-testid="sun-glow"
-          style={{
-            position: 'absolute',
-            top: dayPeriod === 'sunset' || dayPeriod === 'dawn' ? undefined : '5%',
-            bottom: dayPeriod === 'sunset' || dayPeriod === 'dawn' ? '10%' : undefined,
-            right: '12%',
-            width: 56,
-            height: 56,
-            zIndex: 1,
-          }}
-        >
-          {/* Rotating ray spokes */}
-          <svg
-            style={{
-              position: 'absolute',
-              inset: -22,
-              width: 100,
-              height: 100,
-              animation: 'sunRotate 14s linear infinite',
-              opacity: dayPeriod === 'night' ? 0.15 : 1,
-            }}
-            viewBox="0 0 100 100"
-          >
-            {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg, i) => (
-              <line
-                key={i}
-                x1="50" y1="9"
-                x2="50" y2="2"
-                stroke={dayPeriod === 'sunset' ? '#ffb020' : dayPeriod === 'dawn' ? '#ffb8a0' : '#ffd740'}
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                transform={`rotate(${deg}, 50, 50)`}
-              />
-            ))}
-          </svg>
-          {/* Sun disk */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              borderRadius: '50%',
-              background: dayPeriod === 'sunset'
-                ? 'radial-gradient(circle, #fff0a0 25%, #ff9020 55%, rgba(255,100,0,0) 78%)'
-                : dayPeriod === 'dawn'
-                  ? 'radial-gradient(circle, #ffe0e0 25%, #ffb090 55%, rgba(255,170,140,0) 78%)'
-                  : 'radial-gradient(circle, #fff9c4 30%, #ffeb3b 58%, rgba(255,235,59,0) 80%)',
-              animation: 'sunPulse 3s ease-in-out infinite',
-              opacity: dayPeriod === 'night' ? 0.1 : 1,
-            }}
-          />
-        </div>
-      )}
-
-      {/* Clouds - clear gets 1 fluffy cloud; cloudy/rain get 3 darker clouds */}
-      {skyState === 'clear' && (
-        <Cloud x={15} y={7} size={1.0} speed={25} dark={false} />
-      )}
-      {(skyState === 'cloudy' || skyState === 'rain') && (
-        <>
-          <Cloud x={8} y={6} size={1.3} speed={20} dark={skyState === 'rain'} />
-          <Cloud x={42} y={4} size={1.0} speed={27} dark={skyState === 'rain'} />
-          <Cloud x={68} y={10} size={1.2} speed={23} dark={skyState === 'rain'} />
-        </>
-      )}
-
-      {/* Rain darker sky */}
+      {/* Slight darkening for rain only */}
       {skyState === 'rain' && (
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'rgba(50, 70, 95, 0.28)',
-            transition: 'background 1s ease',
+            background: 'rgba(50, 70, 95, 0.15)',
             zIndex: 0,
           }}
         />
       )}
 
-      {/* Dust haze */}
+      {/* Subtle dust haze */}
       {skyState === 'dust' && (
         <div
           data-testid="dust-haze"
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'rgba(185, 145, 75, 0.32)',
+            background: 'rgba(185, 145, 75, 0.18)',
             zIndex: 1,
           }}
         />
@@ -356,48 +227,7 @@ export default function WeatherOverlay({ weather }: WeatherOverlayProps) {
         data-testid="particle-canvas"
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 2 }}
       />
-
-      <style>{`
-        @keyframes sunPulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.08); opacity: 0.88; }
-        }
-        @keyframes sunRotate {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes cloudDrift {
-          from { transform: translateX(0); }
-          to { transform: translateX(22px); }
-        }
-        @keyframes starTwinkle {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.15; transform: scale(0.5); }
-        }
-      `}</style>
     </div>
-  )
-}
-
-function Cloud({ x, y, size, speed, dark }: { x: number; y: number; size: number; speed: number; dark: boolean }) {
-  const color = dark ? 'rgb(100, 115, 130)' : 'white'
-  return (
-    <div
-      data-testid="cloud"
-      style={{
-        position: 'absolute',
-        left: `${x}%`,
-        top: `${y}%`,
-        width: `${80 * size}px`,
-        height: `${40 * size}px`,
-        background: color,
-        borderRadius: '50px',
-        opacity: dark ? 0.88 : 0.72,
-        animation: `cloudDrift ${speed}s ease-in-out infinite alternate`,
-        boxShadow: `${20 * size}px -${10 * size}px 0 ${10 * size}px ${color}`,
-        zIndex: 1,
-      }}
-    />
   )
 }
 
