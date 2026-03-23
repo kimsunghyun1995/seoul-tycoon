@@ -31,7 +31,7 @@
       "description": "Install maplibre-gl package. Create a new MapView component that replaces SeoulMap. Use MapLibre GL JS to render a full-screen interactive map centered on Seoul (lng: 126.978, lat: 37.5665, zoom: 11). Use a free OpenStreetMap-based vector tile source. For initial setup, use the default style or demotiles. The map should fill the viewport, support smooth zoom/pan/rotate. Export a map ref so other components can access the map instance for coordinate projection. Remove the old SeoulMap.tsx SVG component. Update App.tsx to use MapView instead of SeoulMap. Ensure the map renders correctly with basic styling.",
       "test_command": "npm test",
       "acceptance": "MapLibre map renders full screen centered on Seoul. Smooth pan/zoom works. Old SVG map removed. App still builds and core tests pass.",
-      "passes": true
+      "passes": false
     },
     {
       "id": "V4-2",
@@ -39,7 +39,7 @@
       "description": "Create a custom MapLibre style JSON file (src/assets/map-style.json) that transforms the default OSM tiles into a Snap Map-inspired pastel look. Style specifications: (1) Background: pale warm gray #f5f3ef. (2) Roads: white #ffffff with very subtle light gray casing #eee for major roads, thinner for minor. Highway labels hidden or very subtle. (3) Buildings: very light beige/lavender #f0eee8 fill, no stroke. Enable 3D building extrusions at zoom >= 14 with subtle height. (4) Parks/green areas: soft mint #d4edda. (5) Water (Han River, streams): soft sky blue #c5e3f6. (6) Land use areas: very subtle differentiation. (7) Labels: muted gray #999, only show major area names at low zoom, more detail at higher zoom. Use a clean sans-serif font. (8) Overall feel: clean, bright, minimal, pastel - like Snap Map. Import and use this style in MapView component.",
       "test_command": "npm test",
       "acceptance": "Map displays with custom pastel colors. Roads are white, buildings light beige, parks mint green, water sky blue. Overall feel matches Snap Map aesthetic. 3D buildings appear when zoomed in past level 14.",
-      "passes": true
+      "passes": false
     },
     {
       "id": "V4-3",
@@ -47,7 +47,7 @@
       "description": "Update LocationRegistry.ts: remove the geo2svg conversion, export raw lat/lng coordinates directly in Location type. Update Location type in types/index.ts to use { lng: number; lat: number } instead of { x: number; y: number }. Create new HotspotMarker system using MapLibre: add 122 markers as a GeoJSON source + circle layer on the map. Circle color based on congestion level (green/yellow/orange/red from constants/colors.ts). Circle radius: 6px base, 10px when selected, with pulse animation via style expressions. On marker click, show area name popup and trigger selection. Selected marker gets a larger highlighted ring. Labels shown on hover or at higher zoom levels. Remove old SVG-based HotspotMarker.tsx.",
       "test_command": "npm test",
       "acceptance": "122 hotspot markers visible on MapLibre map at correct geographic positions. Colors reflect congestion level. Click selects marker and shows name. Selected marker is highlighted.",
-      "passes": true
+      "passes": false
     },
     {
       "id": "V4-4",
@@ -55,7 +55,7 @@
       "description": "Rewrite CharacterSystem to overlay on MapLibre and use geographic coordinates. Key changes: (1) Position the PixiJS canvas absolutely over the MapLibre canvas. (2) On each animation frame, use map.project(lngLat) to convert each character's home location (lng/lat) to screen pixels. (3) Characters walk within a pixel radius around their projected home position. (4) On map move/zoom events, update all character positions by re-projecting. (5) Keep the existing tiny character rendering (V3-1 dot style). (6) Keep population-proportional character counts (1 per 100 people, max 500). (7) Handle viewport culling: only render characters whose projected position is within the visible screen bounds. (8) The canvas should resize with the map container. (9) Pass map ref from MapView to CharacterSystem via props or context.",
       "test_command": "npm test",
       "acceptance": "Tiny characters walk around at correct geographic positions on the MapLibre map. Characters move correctly when map is panned/zoomed. Only visible characters are rendered. Performance smooth with 1000+ characters.",
-      "passes": true
+      "passes": false
     },
     {
       "id": "V4-5",
@@ -63,7 +63,7 @@
       "description": "Rebuild weather effects to work as an overlay on the MapLibre map. (1) Sky/tint layer: semi-transparent div overlay on top of map that applies color tint based on weather state and time of day. Day/night cycle: day(07-17) no tint, sunset(17-19) warm orange tint, night(19-05) dark navy overlay with stars + moon, dawn(05-07) soft pink. (2) Rain: canvas overlay with 150+ rain streak particles, clearly visible (opacity 0.6+). (3) Snow: 80+ wobbling snowflakes on canvas. (4) Dust: amber haze overlay. (5) Clear: sun glow element with rotating rays (CSS animation). Clouds drifting. (6) All weather overlays use pointer-events:none so map interaction works through them. (7) Night mode: also apply a CSS filter (brightness 0.7) on the map container to dim the map at night.",
       "test_command": "npm test",
       "acceptance": "Weather effects clearly visible over the map. Rain/snow particles render. Day/night tint changes based on current time. Map remains interactive through overlays.",
-      "passes": true
+      "passes": false
     },
     {
       "id": "V4-6",
@@ -71,7 +71,7 @@
       "description": "Update App.tsx to wire everything together with the new MapLibre-based architecture. (1) MapView renders the map and exposes a ref to the maplibre.Map instance. (2) CharacterSystem receives map ref and renders PixiJS overlay. (3) HotspotMarkers are managed as MapLibre layers inside MapView. (4) WeatherOverlay renders on top of everything. (5) TopBar and BottomSheet remain as-is, receiving data from useSeoulData. (6) On hotspot click (from MapLibre layer), update selectedCode state → BottomSheet shows details. (7) Loading overlay and error banner work as before. (8) Ensure all data flow works: API fetch → populate markers + characters → auto-refresh every 5 min.",
       "test_command": "npm run build && npm test",
       "acceptance": "Full app works end-to-end: map renders, hotspots colored by congestion, characters walk around, weather animates, clicking hotspot shows bottom sheet with details, data refreshes automatically.",
-      "passes": true
+      "passes": false
     },
     {
       "id": "V4-7",
@@ -79,7 +79,7 @@
       "description": "Final polish pass: (1) Remove all unused SVG-related code, old SeoulMap districts/mountains/landmarks/trees data. (2) Add Seoul boundary outline on the map as a subtle GeoJSON polygon layer (light dashed line) to visually define the coverage area. (3) Add map controls: zoom +/- buttons (bottom-right, small pastel-styled), compass/north indicator. (4) Smooth initial fly-in animation when map loads (MapLibre flyTo from zoom 9 to 11 over 2 seconds). (5) Ensure mobile responsiveness: touch gestures work, UI elements don't overlap. (6) Update README with new setup instructions mentioning MapLibre. (7) Clean up any unused dependencies.",
       "test_command": "npm run build && npm test",
       "acceptance": "No dead code remaining. Map has zoom controls and compass. Initial load has smooth fly-in animation. Mobile touch works properly. README updated.",
-      "passes": true
+      "passes": false
     }
   ],
   "test_commands": {

@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react'
 import maplibregl, { type Map } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import mapStyle from '../assets/map-style.json'
 import seoulBoundary from '../assets/seoul-boundary.json'
+
+// Use the proven OpenFreeMap liberty style directly - it works out of the box
+const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty'
 
 interface MapViewProps {
   mapRef?: React.MutableRefObject<Map | null>
@@ -19,8 +21,7 @@ export default function MapView({ mapRef, onMapLoaded }: MapViewProps) {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      style: mapStyle as any,
+      style: STYLE_URL,
       center: [126.978, 37.5665],
       zoom: 9,
       minZoom: 9,
@@ -47,10 +48,10 @@ export default function MapView({ mapRef, onMapLoaded }: MapViewProps) {
         type: 'line',
         source: 'seoul-boundary',
         paint: {
-          'line-color': '#aaa',
-          'line-width': 1.5,
+          'line-color': '#ff6b6b',
+          'line-width': 2,
           'line-dasharray': [4, 3],
-          'line-opacity': 0.6,
+          'line-opacity': 0.5,
         },
       })
 
