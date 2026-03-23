@@ -12,11 +12,6 @@ interface SubwayStationCardProps {
 }
 
 function SubwayStationCard({ station, arrivals }: SubwayStationCardProps) {
-  const walkMinutes = Math.round(
-    Math.sqrt(
-      Math.pow((station.lat - 0) * 111000, 2) + Math.pow((station.lng - 0) * 88000, 2)
-    ) / 80
-  )
   const hasMultipleLines = station.lines.length > 1
 
   return (

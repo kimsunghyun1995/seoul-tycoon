@@ -223,12 +223,12 @@ describe('BottomSheet', () => {
     const mockArrivals: SubwayArrivalInfo[] = [
       {
         stationName: '경복궁',
-        lineNumber: 3,
+        lineNumber: '3호선',
         direction: '대화방면',
         destination: '대화',
         arrivalMessage: '2분 후',
         arrivalSeconds: 120,
-        congestion: null,
+        congestion: 'unknown',
         updatedAt: new Date().toISOString(),
       },
     ]
