@@ -3,15 +3,15 @@ import maplibregl, { type Map as MaplibreMap } from 'maplibre-gl'
 import { SUBWAY_STATIONS, SUBWAY_ROUTE_LINES } from '../services/SubwayStationRegistry'
 
 export const SUBWAY_LINE_COLORS: Record<number, string> = {
-  1: '#0052A4', // Dark blue
-  2: '#00A84D', // Green
-  3: '#EF7C1C', // Orange
-  4: '#00A5DE', // Light blue
-  5: '#996CAC', // Purple
-  6: '#CD7C2F', // Brown
-  7: '#747F00', // Olive
-  8: '#E6186C', // Pink
-  9: '#BDB092', // Gold/beige
+  1: '#0052A4',
+  2: '#00A84D',
+  3: '#EF7C1C',
+  4: '#00A5DE',
+  5: '#996CAC',
+  6: '#CD7C2F',
+  7: '#747F00',
+  8: '#E6186C',
+  9: '#BDB092',
 }
 
 const STYLE_ID = 'subway-station-layer-styles'
@@ -20,15 +20,11 @@ function injectStyles() {
   if (document.getElementById(STYLE_ID)) return
   const style = document.createElement('style')
   style.id = STYLE_ID
+  // Use 'top' instead of 'transform' for bounce to avoid conflicting with MapLibre marker transforms
   style.textContent = `
     @keyframes trainBounce {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-2px); }
-    }
-    @keyframes trainWobble {
-      0%, 100% { transform: rotate(0deg) translateY(0px); }
-      25% { transform: rotate(-2deg) translateY(-1px); }
-      75% { transform: rotate(2deg) translateY(-1px); }
+      0%, 100% { margin-top: 0; }
+      50% { margin-top: -2px; }
     }
 
     .subway-station-marker {
@@ -36,7 +32,6 @@ function injectStyles() {
       flex-direction: column;
       align-items: center;
       cursor: pointer;
-      position: relative;
     }
 
     .subway-station-marker .train-wrapper {
@@ -44,65 +39,56 @@ function injectStyles() {
     }
 
     .subway-station-marker:hover .train-wrapper {
-      animation: trainWobble 0.5s ease-in-out infinite;
-      transform: scale(1.2);
+      animation: none;
+    }
+
+    .subway-station-marker:hover .train-body {
+      box-shadow: 0 2px 6px rgba(0,0,0,0.45);
     }
 
     .subway-station-marker .train-body {
-      width: 28px;
-      height: 20px;
+      width: 24px;
+      height: 16px;
       background-color: var(--line-color, #0052A4);
-      border-radius: 5px 5px 3px 3px;
+      border-radius: 4px 4px 2px 2px;
       display: flex;
-      flex-direction: row;
       align-items: center;
       justify-content: center;
-      gap: 3px;
-      padding: 3px 4px;
+      gap: 2px;
+      padding: 2px 3px;
       box-sizing: border-box;
-      position: relative;
       box-shadow: 0 1px 3px rgba(0,0,0,0.35);
-    }
-
-    .subway-station-marker .train-body::after {
-      content: '';
-      position: absolute;
-      bottom: -3px;
-      left: 4px;
-      right: 4px;
-      height: 3px;
-      background: rgba(0,0,0,0.25);
-      border-radius: 0 0 3px 3px;
+      border: 1.5px solid rgba(255,255,255,0.7);
     }
 
     .subway-station-marker .train-window {
-      width: 7px;
-      height: 8px;
-      background: rgba(255,255,255,0.88);
-      border-radius: 2px;
+      width: 5px;
+      height: 6px;
+      background: rgba(255,255,255,0.85);
+      border-radius: 1.5px;
       flex-shrink: 0;
     }
 
     .subway-station-marker .line-badge {
-      width: 14px;
-      height: 14px;
+      width: 13px;
+      height: 13px;
       border-radius: 50%;
       background-color: var(--line-color, #0052A4);
       color: white;
-      font-size: 8px;
-      font-weight: 700;
+      font-size: 7px;
+      font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 2px;
+      margin-top: 1px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.6);
+      border: 1.5px solid white;
       line-height: 1;
     }
 
     .subway-station-marker .station-tooltip {
       position: absolute;
-      bottom: calc(100% + 6px);
+      bottom: calc(100% + 4px);
       left: 50%;
       transform: translateX(-50%);
       background: white;
@@ -110,7 +96,7 @@ function injectStyles() {
       font-size: 10px;
       font-weight: 600;
       white-space: nowrap;
-      padding: 3px 6px;
+      padding: 2px 6px;
       border-radius: 4px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
       pointer-events: none;
@@ -125,7 +111,7 @@ function injectStyles() {
       top: 100%;
       left: 50%;
       transform: translateX(-50%);
-      border: 4px solid transparent;
+      border: 3px solid transparent;
       border-top-color: white;
     }
 
@@ -142,12 +128,19 @@ interface SubwayStationLayerProps {
 
 export default function SubwayStationLayer({ map }: SubwayStationLayerProps) {
   const markersRef = useRef<maplibregl.Marker[]>([])
+  const routeAddedRef = useRef(false)
 
-  // Add route lines between stations using GeoJSON
+  // Add route lines between stations
   useEffect(() => {
     if (!map) return
+    routeAddedRef.current = false
 
     const addLines = () => {
+      if (routeAddedRef.current) return
+      try {
+        if (map.getSource('subway-routes')) return
+      } catch { return }
+
       const geojson: GeoJSON.FeatureCollection = {
         type: 'FeatureCollection',
         features: SUBWAY_ROUTE_LINES.map(route => ({
@@ -155,12 +148,12 @@ export default function SubwayStationLayer({ map }: SubwayStationLayerProps) {
           properties: { lineNumber: route.lineNumber, color: route.color },
           geometry: {
             type: 'LineString' as const,
-            coordinates: route.coordinates.map(([lat, lng]) => [lng, lat]), // GeoJSON is [lng, lat]
+            coordinates: route.coordinates.map(([lat, lng]) => [lng, lat]),
           },
         })),
       }
 
-      if (!map.getSource('subway-routes')) {
+      try {
         map.addSource('subway-routes', { type: 'geojson', data: geojson })
         map.addLayer({
           id: 'subway-routes-line',
@@ -168,22 +161,31 @@ export default function SubwayStationLayer({ map }: SubwayStationLayerProps) {
           source: 'subway-routes',
           paint: {
             'line-color': ['get', 'color'],
-            'line-width': 2.5,
-            'line-opacity': 0.5,
+            'line-width': 3,
+            'line-opacity': 0.6,
           },
           layout: {
             'line-cap': 'round',
             'line-join': 'round',
           },
-          minzoom: 11, // Only show at zoom 11+
+          minzoom: 11,
         })
+        routeAddedRef.current = true
+      } catch {
+        // Style may not be ready yet
       }
     }
 
-    if (map.isStyleLoaded()) addLines()
-    else map.on('load', addLines)
+    // Try immediately, on load, and on styledata
+    if (map.isStyleLoaded()) {
+      addLines()
+    }
+    map.on('load', addLines)
+    map.on('styledata', addLines)
 
     return () => {
+      map.off('load', addLines)
+      map.off('styledata', addLines)
       try {
         if (map.getLayer('subway-routes-line')) map.removeLayer('subway-routes-line')
         if (map.getSource('subway-routes')) map.removeSource('subway-routes')
@@ -207,30 +209,25 @@ export default function SubwayStationLayer({ map }: SubwayStationLayerProps) {
       el.className = 'subway-station-marker'
       el.style.setProperty('--line-color', lineColor)
 
-      // Tooltip
       const tooltip = document.createElement('div')
       tooltip.className = 'station-tooltip'
       tooltip.textContent = `${station.name} (${station.lines.map(l => `${l}호선`).join(', ')})`
 
-      // Train wrapper (holds the bouncing animation)
       const trainWrapper = document.createElement('div')
       trainWrapper.className = 'train-wrapper'
 
-      // Train body
       const trainBody = document.createElement('div')
       trainBody.className = 'train-body'
 
-      const window1 = document.createElement('div')
-      window1.className = 'train-window'
+      const w1 = document.createElement('div')
+      w1.className = 'train-window'
+      const w2 = document.createElement('div')
+      w2.className = 'train-window'
 
-      const window2 = document.createElement('div')
-      window2.className = 'train-window'
-
-      trainBody.appendChild(window1)
-      trainBody.appendChild(window2)
+      trainBody.appendChild(w1)
+      trainBody.appendChild(w2)
       trainWrapper.appendChild(trainBody)
 
-      // Line badge
       const lineBadge = document.createElement('div')
       lineBadge.className = 'line-badge'
       lineBadge.textContent = String(primaryLine)
@@ -239,7 +236,7 @@ export default function SubwayStationLayer({ map }: SubwayStationLayerProps) {
       el.appendChild(trainWrapper)
       el.appendChild(lineBadge)
 
-      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
         .setLngLat([station.lng, station.lat])
         .addTo(map)
 
@@ -247,32 +244,26 @@ export default function SubwayStationLayer({ map }: SubwayStationLayerProps) {
     }
 
     return () => {
-      for (const marker of markersRef.current) {
-        marker.remove()
-      }
+      for (const m of markersRef.current) m.remove()
       markersRef.current = []
     }
   }, [map])
 
-  // Zoom-dependent marker visibility: only show at zoom >= 12
+  // Zoom-dependent visibility
   useEffect(() => {
     if (!map) return
 
-    const updateVisibility = () => {
+    const update = () => {
       const zoom = map.getZoom()
-      const visible = zoom >= 12
+      const show = zoom >= 12
       markersRef.current.forEach(m => {
-        const el = m.getElement()
-        el.style.display = visible ? '' : 'none'
+        m.getElement().style.display = show ? '' : 'none'
       })
     }
 
-    map.on('zoom', updateVisibility)
-    updateVisibility() // initial check
-
-    return () => {
-      map.off('zoom', updateVisibility)
-    }
+    map.on('zoom', update)
+    update()
+    return () => { map.off('zoom', update) }
   }, [map])
 
   return null

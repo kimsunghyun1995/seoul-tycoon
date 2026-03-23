@@ -82,7 +82,6 @@ describe('SubwayStationLayer', () => {
     const styleEl = document.getElementById('subway-station-layer-styles')
     expect(styleEl).not.toBeNull()
     expect(styleEl?.textContent).toContain('trainBounce')
-    expect(styleEl?.textContent).toContain('trainWobble')
   })
 
   it('does not inject duplicate style tags on re-render', () => {
