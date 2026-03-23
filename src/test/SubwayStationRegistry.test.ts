@@ -2,13 +2,14 @@ import { describe, it, expect } from 'vitest'
 import {
   SUBWAY_STATIONS,
   SUBWAY_STATION_MAP,
+  SUBWAY_ROUTE_LINES,
   findNearbyStations,
   findStationsNearCoord,
 } from '../services/SubwayStationRegistry'
 
 describe('SubwayStationRegistry', () => {
-  it('has at least 40 stations', () => {
-    expect(SUBWAY_STATIONS.length).toBeGreaterThanOrEqual(40)
+  it('has at least 60 stations', () => {
+    expect(SUBWAY_STATIONS.length).toBeGreaterThanOrEqual(60)
   })
 
   it('every station has required fields', () => {
@@ -19,6 +20,15 @@ describe('SubwayStationRegistry', () => {
       expect(s.lines.length).toBeGreaterThan(0)
       expect(s.lat).toBeGreaterThan(37)
       expect(s.lng).toBeGreaterThan(126)
+    }
+  })
+
+  it('all stations are within Seoul city limits', () => {
+    for (const s of SUBWAY_STATIONS) {
+      expect(s.lat).toBeGreaterThanOrEqual(37.42)
+      expect(s.lat).toBeLessThanOrEqual(37.70)
+      expect(s.lng).toBeGreaterThanOrEqual(126.76)
+      expect(s.lng).toBeLessThanOrEqual(127.18)
     }
   })
 
@@ -93,6 +103,34 @@ describe('SubwayStationRegistry', () => {
       const stations = findStationsNearCoord(37.51, 126.950)
       // This area might or might not have stations; just verify it returns an array
       expect(Array.isArray(stations)).toBe(true)
+    })
+  })
+
+  describe('SUBWAY_ROUTE_LINES', () => {
+    it('has route lines for all 9 lines', () => {
+      expect(SUBWAY_ROUTE_LINES.length).toBe(9)
+      for (let line = 1; line <= 9; line++) {
+        const route = SUBWAY_ROUTE_LINES.find(r => r.lineNumber === line)
+        expect(route).toBeDefined()
+        expect(route!.coordinates.length).toBeGreaterThanOrEqual(3)
+      }
+    })
+
+    it('all route coordinates are within Seoul city limits', () => {
+      for (const route of SUBWAY_ROUTE_LINES) {
+        for (const [lat, lng] of route.coordinates) {
+          expect(lat).toBeGreaterThanOrEqual(37.42)
+          expect(lat).toBeLessThanOrEqual(37.70)
+          expect(lng).toBeGreaterThanOrEqual(126.76)
+          expect(lng).toBeLessThanOrEqual(127.18)
+        }
+      }
+    })
+
+    it('each route has a valid hex color', () => {
+      for (const route of SUBWAY_ROUTE_LINES) {
+        expect(route.color).toMatch(/^#[0-9A-Fa-f]{6}$/)
+      }
     })
   })
 

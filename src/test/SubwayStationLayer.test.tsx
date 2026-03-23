@@ -16,6 +16,7 @@ vi.mock('maplibre-gl', () => {
     setLngLat(_coords: [number, number]) { return this }
     addTo(_map: unknown) { return this }
     remove() {}
+    getElement() { return this._element }
   }
   return {
     default: { Marker: MockMarker },
@@ -26,6 +27,13 @@ const mockMap = {
   on: vi.fn(),
   off: vi.fn(),
   isStyleLoaded: vi.fn().mockReturnValue(true),
+  getZoom: vi.fn().mockReturnValue(13),
+  getSource: vi.fn().mockReturnValue(null),
+  getLayer: vi.fn().mockReturnValue(null),
+  addSource: vi.fn(),
+  addLayer: vi.fn(),
+  removeSource: vi.fn(),
+  removeLayer: vi.fn(),
 }
 
 describe('SUBWAY_LINE_COLORS', () => {

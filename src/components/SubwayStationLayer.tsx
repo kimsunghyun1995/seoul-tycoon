@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import maplibregl, { type Map as MaplibreMap } from 'maplibre-gl'
-import { SUBWAY_STATIONS } from '../services/SubwayStationRegistry'
+import { SUBWAY_STATIONS, SUBWAY_ROUTE_LINES } from '../services/SubwayStationRegistry'
 
 export const SUBWAY_LINE_COLORS: Record<number, string> = {
   1: '#0052A4', // Dark blue
@@ -143,6 +143,57 @@ interface SubwayStationLayerProps {
 export default function SubwayStationLayer({ map }: SubwayStationLayerProps) {
   const markersRef = useRef<maplibregl.Marker[]>([])
 
+  // Add route lines between stations using GeoJSON
+  useEffect(() => {
+    if (!map) return
+
+    const addLines = () => {
+      const geojson: GeoJSON.FeatureCollection = {
+        type: 'FeatureCollection',
+        features: SUBWAY_ROUTE_LINES.map(route => ({
+          type: 'Feature' as const,
+          properties: { lineNumber: route.lineNumber, color: route.color },
+          geometry: {
+            type: 'LineString' as const,
+            coordinates: route.coordinates.map(([lat, lng]) => [lng, lat]), // GeoJSON is [lng, lat]
+          },
+        })),
+      }
+
+      if (!map.getSource('subway-routes')) {
+        map.addSource('subway-routes', { type: 'geojson', data: geojson })
+        map.addLayer({
+          id: 'subway-routes-line',
+          type: 'line',
+          source: 'subway-routes',
+          paint: {
+            'line-color': ['get', 'color'],
+            'line-width': 2.5,
+            'line-opacity': 0.5,
+          },
+          layout: {
+            'line-cap': 'round',
+            'line-join': 'round',
+          },
+          minzoom: 11, // Only show at zoom 11+
+        })
+      }
+    }
+
+    if (map.isStyleLoaded()) addLines()
+    else map.on('load', addLines)
+
+    return () => {
+      try {
+        if (map.getLayer('subway-routes-line')) map.removeLayer('subway-routes-line')
+        if (map.getSource('subway-routes')) map.removeSource('subway-routes')
+      } catch {
+        // Map may already be destroyed
+      }
+    }
+  }, [map])
+
+  // Create station markers
   useEffect(() => {
     if (!map) return
 
@@ -200,6 +251,27 @@ export default function SubwayStationLayer({ map }: SubwayStationLayerProps) {
         marker.remove()
       }
       markersRef.current = []
+    }
+  }, [map])
+
+  // Zoom-dependent marker visibility: only show at zoom >= 12
+  useEffect(() => {
+    if (!map) return
+
+    const updateVisibility = () => {
+      const zoom = map.getZoom()
+      const visible = zoom >= 12
+      markersRef.current.forEach(m => {
+        const el = m.getElement()
+        el.style.display = visible ? '' : 'none'
+      })
+    }
+
+    map.on('zoom', updateVisibility)
+    updateVisibility() // initial check
+
+    return () => {
+      map.off('zoom', updateVisibility)
     }
   }, [map])
 
