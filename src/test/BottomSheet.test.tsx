@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import BottomSheet from '../components/BottomSheet'
-import type { AreaData } from '../types'
+import type { AreaData, CulturalEvent } from '../types'
 
 const mockAreaData: AreaData = {
   areaCd: 'POI001',
@@ -81,5 +81,73 @@ describe('BottomSheet', () => {
   it('does not show backdrop when areaData is null', () => {
     render(<BottomSheet areaData={null} onDismiss={vi.fn()} />)
     expect(screen.queryByTestId('bottom-sheet-backdrop')).not.toBeInTheDocument()
+  })
+
+  it('does not show events section when events prop is empty', () => {
+    render(<BottomSheet areaData={mockAreaData} onDismiss={vi.fn()} events={[]} />)
+    expect(screen.queryByTestId('events-section-title')).not.toBeInTheDocument()
+  })
+
+  it('shows events section when events are provided', () => {
+    const mockEvents: CulturalEvent[] = [
+      {
+        title: '경복궁 야간 개장',
+        category: '문화행사',
+        place: '경복궁',
+        startDate: '2026-03-01',
+        endDate: '2026-03-31',
+        lat: 37.577,
+        lng: 126.977,
+        guName: '종로구',
+        orgLink: 'https://example.com',
+        mainImg: '',
+        useFee: '무료',
+      },
+    ]
+    render(<BottomSheet areaData={mockAreaData} onDismiss={vi.fn()} events={mockEvents} />)
+    expect(screen.getByTestId('events-section-title')).toHaveTextContent('진행 중인 행사 (1)')
+    expect(screen.getByTestId('bottom-sheet-event')).toBeInTheDocument()
+    expect(screen.getByText('경복궁 야간 개장')).toBeInTheDocument()
+  })
+
+  it('shows multiple events when provided', () => {
+    const mockEvents: CulturalEvent[] = [
+      {
+        title: '행사 1',
+        category: '공연',
+        place: '장소 1',
+        startDate: '2026-03-01',
+        endDate: '2026-03-31',
+        lat: 37.577,
+        lng: 126.977,
+        guName: '종로구',
+        orgLink: '',
+        mainImg: '',
+        useFee: '무료',
+      },
+      {
+        title: '행사 2',
+        category: '전시',
+        place: '장소 2',
+        startDate: '2026-03-01',
+        endDate: '2026-03-31',
+        lat: 37.578,
+        lng: 126.978,
+        guName: '종로구',
+        orgLink: 'https://example.com',
+        mainImg: '',
+        useFee: '유료',
+      },
+    ]
+    render(<BottomSheet areaData={mockAreaData} onDismiss={vi.fn()} events={mockEvents} />)
+    expect(screen.getByTestId('events-section-title')).toHaveTextContent('진행 중인 행사 (2)')
+    expect(screen.getAllByTestId('bottom-sheet-event')).toHaveLength(2)
+  })
+
+  it('accepts events prop without breaking existing behavior', () => {
+    // events prop is optional, should not break without it
+    render(<BottomSheet areaData={mockAreaData} onDismiss={vi.fn()} />)
+    expect(screen.getByTestId('area-name')).toHaveTextContent('경복궁')
+    expect(screen.queryByTestId('events-section-title')).not.toBeInTheDocument()
   })
 })

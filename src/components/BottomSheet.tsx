@@ -1,4 +1,4 @@
-import type { AreaData } from '../types'
+import type { AreaData, CulturalEvent } from '../types'
 import { CONGESTION_COLOR, CONGESTION_BG } from '../constants/colors'
 
 const AGE_LABELS = ['0대', '10대', '20대', '30대', '40대', '50대', '60대', '70대+']
@@ -53,9 +53,10 @@ function GenderBar({ maleRate, femaleRate }: GenderBarProps) {
 interface BottomSheetProps {
   areaData: AreaData | null
   onDismiss: () => void
+  events?: CulturalEvent[]
 }
 
-export default function BottomSheet({ areaData, onDismiss }: BottomSheetProps) {
+export default function BottomSheet({ areaData, onDismiss, events = [] }: BottomSheetProps) {
   const isVisible = areaData !== null
   const pop = areaData?.population ?? null
   const congestion = pop?.areaCongestLvl ?? '여유'
@@ -167,6 +168,38 @@ export default function BottomSheet({ areaData, onDismiss }: BottomSheetProps) {
               </>
             ) : (
               <p className="text-gray-400 text-sm">데이터 없음</p>
+            )}
+
+            {/* Events section - only if there are events */}
+            {events.length > 0 && (
+              <div className="mt-4 pt-4" style={{ borderTop: '1px solid #eee' }}>
+                <p className="text-sm font-bold text-gray-700 mb-2" data-testid="events-section-title">
+                  📅 진행 중인 행사 ({events.length})
+                </p>
+                <div className="flex flex-col gap-2">
+                  {events.map((event, idx) => (
+                    <div
+                      key={idx}
+                      data-testid="bottom-sheet-event"
+                      className="p-2 rounded-lg text-sm"
+                      style={{ background: '#f8f9fa' }}
+                    >
+                      <p className="font-medium text-gray-800">{event.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{event.place}</p>
+                      {event.orgLink && (
+                        <a
+                          href={event.orgLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-500 mt-0.5 inline-block"
+                        >
+                          상세보기 →
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </>
         )}

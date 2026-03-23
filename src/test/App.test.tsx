@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import App from '../App'
 
@@ -73,5 +73,37 @@ describe('App', () => {
   it('shows loading overlay on initial render', () => {
     const { getByTestId } = render(<App />)
     expect(getByTestId('loading-overlay')).toBeInTheDocument()
+  })
+
+  it('renders ranking toggle button', () => {
+    const { getByTestId } = render(<App />)
+    expect(getByTestId('ranking-toggle')).toBeInTheDocument()
+  })
+
+  it('opens ranking panel when toggle is clicked', () => {
+    const { getByTestId } = render(<App />)
+    const toggle = getByTestId('ranking-toggle')
+    fireEvent.click(toggle)
+    const panel = getByTestId('ranking-panel')
+    // Panel should be rendered (open state managed by transform)
+    expect(panel).toBeInTheDocument()
+  })
+
+  it('renders ranking panel in closed state initially', () => {
+    const { getByTestId } = render(<App />)
+    const panel = getByTestId('ranking-panel')
+    expect(panel).toBeInTheDocument()
+    // Initially closed (transformed away)
+    expect(panel.style.transform).toContain('translateX(100%)')
+  })
+
+  it('closes ranking panel when close button is clicked', () => {
+    const { getByTestId } = render(<App />)
+    // Open first
+    fireEvent.click(getByTestId('ranking-toggle'))
+    // Close
+    fireEvent.click(getByTestId('ranking-panel-close'))
+    const panel = getByTestId('ranking-panel')
+    expect(panel.style.transform).toContain('translateX(100%)')
   })
 })

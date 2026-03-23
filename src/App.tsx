@@ -6,9 +6,14 @@ import LandmarkLayer from './components/LandmarkLayer'
 import TopBar from './components/TopBar'
 import BottomSheet from './components/BottomSheet'
 import WeatherOverlay, { getDayPeriod } from './components/WeatherOverlay'
+import RankingToggle from './components/RankingToggle'
+import RankingPanel from './components/RankingPanel'
 import { useSeoulData } from './hooks/useSeoulData'
+import { useEventData } from './hooks/useEventData'
+import { useRanking, SortMode } from './hooks/useRanking'
 import { LOCATIONS, LOCATION_MAP } from './services/LocationRegistry'
 import type { Map as MaplibreMap } from 'maplibre-gl'
+import type { CongestionLevel } from './types'
 
 const API_KEY = import.meta.env.VITE_SEOUL_API_KEY ?? ''
 
@@ -18,6 +23,9 @@ export default function App() {
   const mapRef = useRef<MaplibreMap | null>(null)
   const [mapInstance, setMapInstance] = useState<MaplibreMap | null>(null)
   const handleMapLoaded = useCallback((map: MaplibreMap) => setMapInstance(map), [])
+  const [rankingOpen, setRankingOpen] = useState(false)
+  const [sortMode, setSortMode] = useState<SortMode>('congestion')
+  const { events, eventsByArea, loading: eventsLoading, fetch: fetchEvents } = useEventData()
 
   // Get weather from the first available area with weather data
   const weather = useMemo(() => {
@@ -29,7 +37,7 @@ export default function App() {
 
   // Build congestion map (code → congestion level) from API data
   const congestionMap = useMemo(() => {
-    const map = new Map<string, import('./types').CongestionLevel>()
+    const map = new Map<string, CongestionLevel>()
     for (const loc of LOCATIONS) {
       const areaData = data.get(loc.name)
       if (areaData?.population?.areaCongestLvl) {
@@ -52,6 +60,17 @@ export default function App() {
     return map
   }, [data])
 
+  const rankings = useRanking(data, eventsByArea, sortMode)
+
+  // Count busy areas (붐빔 or 약간 붐빔)
+  const busyCount = useMemo(() => {
+    let count = 0
+    for (const level of congestionMap.values()) {
+      if (level === '붐빔' || level === '약간 붐빔') count++
+    }
+    return count
+  }, [congestionMap])
+
   // Get selected area data
   const selectedAreaData = useMemo(() => {
     if (!selectedCode) return null
@@ -61,6 +80,22 @@ export default function App() {
   }, [selectedCode, data])
 
   const handleDismiss = () => setSelectedCode(null)
+
+  const handleRankingOpen = useCallback(() => {
+    setRankingOpen(true)
+    if (events.length === 0 && !eventsLoading) {
+      fetchEvents()
+    }
+  }, [events.length, eventsLoading, fetchEvents])
+
+  const handleRankingSelect = useCallback((code: string) => {
+    setSelectedCode(code)
+    setRankingOpen(false)
+    const loc = LOCATION_MAP.get(code)
+    if (loc && mapRef.current) {
+      mapRef.current.flyTo({ center: [loc.lng, loc.lat], zoom: 15, duration: 1500 })
+    }
+  }, [])
 
   const dayPeriod = getDayPeriod(new Date().getHours())
   const mapFilter = dayPeriod === 'night' ? { filter: 'brightness(0.7)' } : undefined
@@ -131,8 +166,26 @@ export default function App() {
         </div>
       )}
 
+      {/* Ranking toggle FAB */}
+      <RankingToggle onClick={handleRankingOpen} busyCount={busyCount} />
+
+      {/* Ranking panel */}
+      <RankingPanel
+        isOpen={rankingOpen}
+        onClose={() => setRankingOpen(false)}
+        rankings={rankings}
+        sortMode={sortMode}
+        onSortChange={setSortMode}
+        onSelectArea={handleRankingSelect}
+        loading={eventsLoading}
+      />
+
       {/* Bottom sheet */}
-      <BottomSheet areaData={selectedAreaData} onDismiss={handleDismiss} />
+      <BottomSheet
+        areaData={selectedAreaData}
+        onDismiss={handleDismiss}
+        events={selectedCode ? (eventsByArea.get(selectedCode) ?? []) : []}
+      />
     </div>
   )
 }
