@@ -32,6 +32,7 @@ jobs:
       - name: Build
         env:
           VITE_SEOUL_API_KEY: ${{ secrets.VITE_SEOUL_API_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
         run: npm run build
 
       - name: Upload artifact

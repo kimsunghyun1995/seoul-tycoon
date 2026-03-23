@@ -1,10 +1,9 @@
 import type { AreaData, PopulationData, WeatherData, CongestionLevel, AirQualityLevel } from '../types'
-import { fetchWithCorsProxy, delay } from './corsProxy'
+import { fetchWithCorsProxy, getSeoulApiBase, delay } from './corsProxy'
 
-// Use Vite proxy in dev; direct URL in production (CORS proxy wraps it)
-const API_BASE = import.meta.env.DEV ? '/api/seoul' : 'http://openapi.seoul.go.kr:8088'
+const { base: API_BASE, includeApiKey: INCLUDE_API_KEY } = getSeoulApiBase()
 const CONCURRENCY_LIMIT = import.meta.env.DEV ? 5 : 3
-const BATCH_DELAY_MS = import.meta.env.DEV ? 0 : 1000
+const BATCH_DELAY_MS = import.meta.env.DEV ? 0 : 500
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -83,7 +82,9 @@ export class SeoulApiService {
   }
 
   async fetchArea(areaName: string): Promise<AreaData> {
-    const url = `${API_BASE}/${this.apiKey}/json/citydata/1/5/${encodeURIComponent(areaName)}`
+    const url = INCLUDE_API_KEY
+      ? `${API_BASE}/${this.apiKey}/json/citydata/1/5/${encodeURIComponent(areaName)}`
+      : `${API_BASE}/citydata/1/5/${encodeURIComponent(areaName)}`
     const response = await fetchWithCorsProxy(url)
     if (!response.ok) {
       throw new Error(`API error: ${response.status} for ${areaName}`)

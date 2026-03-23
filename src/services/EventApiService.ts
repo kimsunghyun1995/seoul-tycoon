@@ -1,7 +1,7 @@
 import type { CulturalEvent } from '../types'
-import { fetchWithCorsProxy } from './corsProxy'
+import { fetchWithCorsProxy, getSeoulApiBase } from './corsProxy'
 
-const API_BASE = import.meta.env.DEV ? '/api/seoul' : 'http://openapi.seoul.go.kr:8088'
+const { base: API_BASE, includeApiKey: INCLUDE_API_KEY } = getSeoulApiBase()
 
 /**
  * Parse date strings from "YYYY-MM-DD HH:mm:ss" or "YYYY-MM-DD" format.
@@ -50,7 +50,9 @@ export class EventApiService {
     }
 
     const apiKey = import.meta.env.VITE_SEOUL_API_KEY ?? ''
-    const url = `${API_BASE}/${apiKey}/json/culturalEventInfo/1/1000/`
+    const url = INCLUDE_API_KEY
+      ? `${API_BASE}/${apiKey}/json/culturalEventInfo/1/1000/`
+      : `${API_BASE}/culturalEventInfo/1/1000/`
 
     const response = await fetchWithCorsProxy(url)
     if (!response.ok) {
