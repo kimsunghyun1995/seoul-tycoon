@@ -129,3 +129,26 @@ export interface PredictionFactor {
   impact: 'increase' | 'decrease' | 'neutral'
   weight: number
 }
+
+// Subway station data
+export interface SubwayStation {
+  id: string                    // e.g., "ST001"
+  name: string                  // Korean name
+  nameEn: string                // English name
+  lines: number[]               // Line numbers [2], [2, 6], etc.
+  lat: number
+  lng: number
+  nearbyHotspots: string[]      // POI codes within 800m
+}
+
+// Real-time subway arrival
+export interface SubwayArrivalInfo {
+  stationName: string
+  lineNumber: string            // "2호선", "6호선"
+  direction: string             // "잠실방면", etc.
+  destination: string           // Final destination
+  arrivalMessage: string        // "3분 20초", "전역 도착", etc.
+  arrivalSeconds: number        // Seconds until arrival (-1 if unknown)
+  congestion: 'low' | 'medium' | 'high' | 'unknown'
+  updatedAt: string
+}
