@@ -1,5 +1,95 @@
-import type { AreaData, CulturalEvent } from '../types'
+import type { AreaData, CulturalEvent, SubwayStation, SubwayArrivalInfo } from '../types'
 import { CONGESTION_COLOR, CONGESTION_BG } from '../constants/colors'
+
+const LINE_COLORS: Record<number, string> = {
+  1: '#0052A4', 2: '#00A84D', 3: '#EF7C1C', 4: '#00A5DE',
+  5: '#996CAC', 6: '#CD7C2F', 7: '#747F00', 8: '#E6186C', 9: '#BDB092',
+}
+
+interface SubwayStationCardProps {
+  station: SubwayStation
+  arrivals: SubwayArrivalInfo[]
+}
+
+function SubwayStationCard({ station, arrivals }: SubwayStationCardProps) {
+  const walkMinutes = Math.round(
+    Math.sqrt(
+      Math.pow((station.lat - 0) * 111000, 2) + Math.pow((station.lng - 0) * 88000, 2)
+    ) / 80
+  )
+  const hasMultipleLines = station.lines.length > 1
+
+  return (
+    <div
+      data-testid="subway-station-card"
+      className="p-2 rounded-lg text-sm mb-2"
+      style={{ background: '#f8f9fa' }}
+    >
+      <div className="flex items-center gap-1 mb-1">
+        {/* Line badges */}
+        <div className="flex gap-1">
+          {station.lines.map(line => (
+            <span
+              key={line}
+              style={{
+                background: LINE_COLORS[line] ?? '#888',
+                color: 'white',
+                borderRadius: '50%',
+                width: 20,
+                height: 20,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 10,
+                fontWeight: 'bold',
+                flexShrink: 0,
+              }}
+            >
+              {line}
+            </span>
+          ))}
+        </div>
+        {/* Station name */}
+        <span className="font-medium text-gray-800">{station.name}</span>
+        {station.nameEn && (
+          <span className="text-xs text-gray-400">{station.nameEn}</span>
+        )}
+        {hasMultipleLines && (
+          <span
+            className="text-xs px-1 rounded"
+            style={{ background: '#e8f4fd', color: '#1976d2', marginLeft: 'auto' }}
+          >
+            환승 Transfer
+          </span>
+        )}
+      </div>
+      {/* Arrivals */}
+      {arrivals.length > 0 ? (
+        <div className="flex flex-col gap-0.5 mt-1">
+          {arrivals.map((arrival, idx) => (
+            <div
+              key={idx}
+              data-testid="subway-arrival-row"
+              className="flex items-center gap-1 text-xs"
+            >
+              <span className="text-gray-500">{arrival.direction ?? arrival.destination}</span>
+              <span
+                style={{
+                  color: (arrival.arrivalSeconds ?? 999) < 60 ? '#e53935' : '#1565c0',
+                  fontWeight: (arrival.arrivalSeconds ?? 999) < 60 ? 'bold' : 'normal',
+                }}
+              >
+                {arrival.arrivalMessage}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-gray-400 mt-1">도보 근처</p>
+      )}
+    </div>
+  )
+}
 
 const AGE_LABELS = ['0대', '10대', '20대', '30대', '40대', '50대', '60대', '70대+']
 
@@ -54,9 +144,12 @@ interface BottomSheetProps {
   areaData: AreaData | null
   onDismiss: () => void
   events?: CulturalEvent[]
+  nearbyStations?: SubwayStation[]
+  subwayArrivals?: Map<string, SubwayArrivalInfo[]>
+  subwayLoading?: boolean
 }
 
-export default function BottomSheet({ areaData, onDismiss, events = [] }: BottomSheetProps) {
+export default function BottomSheet({ areaData, onDismiss, events = [], nearbyStations, subwayArrivals, subwayLoading }: BottomSheetProps) {
   const isVisible = areaData !== null
   const pop = areaData?.population ?? null
   const congestion = pop?.areaCongestLvl ?? '여유'
@@ -199,6 +292,20 @@ export default function BottomSheet({ areaData, onDismiss, events = [] }: Bottom
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Subway section */}
+            {(nearbyStations?.length ?? 0) > 0 && (
+              <div className="mt-4 pt-4" style={{ borderTop: '1px solid #eee' }}>
+                <p className="text-sm font-bold text-gray-700 mb-2" data-testid="subway-section-title">
+                  🚇 Nearby Stations · 가까운 역
+                </p>
+                {subwayLoading && <p className="text-xs text-gray-400">도착 정보 불러오는 중...</p>}
+                {nearbyStations!.map(station => {
+                  const arrivals = subwayArrivals?.get(station.id) ?? []
+                  return <SubwayStationCard key={station.id} station={station} arrivals={arrivals} />
+                })}
               </div>
             )}
           </>

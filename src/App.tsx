@@ -8,9 +8,11 @@ import BottomSheet from './components/BottomSheet'
 import WeatherOverlay, { getDayPeriod } from './components/WeatherOverlay'
 import RankingToggle from './components/RankingToggle'
 import RankingPanel from './components/RankingPanel'
+import SubwayStationLayer from './components/SubwayStationLayer'
 import { useSeoulData } from './hooks/useSeoulData'
 import { useEventData } from './hooks/useEventData'
 import { useRanking, SortMode } from './hooks/useRanking'
+import { useSubwayData } from './hooks/useSubwayData'
 import { LOCATIONS, LOCATION_MAP } from './services/LocationRegistry'
 import type { Map as MaplibreMap } from 'maplibre-gl'
 import type { CongestionLevel } from './types'
@@ -26,6 +28,7 @@ export default function App() {
   const [rankingOpen, setRankingOpen] = useState(false)
   const [sortMode, setSortMode] = useState<SortMode>('congestion')
   const { events, eventsByArea, loading: eventsLoading, fetch: fetchEvents } = useEventData()
+  const { nearbyStations, arrivals: subwayArrivals, loading: subwayLoading } = useSubwayData(selectedCode)
 
   // Get weather from the first available area with weather data
   const weather = useMemo(() => {
@@ -113,6 +116,7 @@ export default function App() {
           onSelect={setSelectedCode}
         />
         <LandmarkLayer map={mapInstance} />
+        <SubwayStationLayer map={mapInstance} />
         <CharacterSystem
           map={mapInstance}
           locations={LOCATIONS}
@@ -185,6 +189,9 @@ export default function App() {
         areaData={selectedAreaData}
         onDismiss={handleDismiss}
         events={selectedCode ? (eventsByArea.get(selectedCode) ?? []) : []}
+        nearbyStations={nearbyStations}
+        subwayArrivals={subwayArrivals}
+        subwayLoading={subwayLoading}
       />
     </div>
   )

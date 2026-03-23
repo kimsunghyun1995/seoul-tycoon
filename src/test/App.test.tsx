@@ -21,6 +21,16 @@ vi.mock('maplibre-gl', () => {
 
 vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}))
 
+// Mock useSubwayData hook
+vi.mock('../hooks/useSubwayData', () => ({
+  useSubwayData: vi.fn(() => ({
+    nearbyStations: [],
+    arrivals: new Map(),
+    loading: false,
+    error: null,
+  })),
+}))
+
 // Mock PixiJS - no WebGL in jsdom
 vi.mock('pixi.js', () => {
   class MockApplication {
@@ -105,5 +115,12 @@ describe('App', () => {
     fireEvent.click(getByTestId('ranking-panel-close'))
     const panel = getByTestId('ranking-panel')
     expect(panel.style.transform).toContain('translateX(100%)')
+  })
+
+  it('renders SubwayStationLayer (no error thrown)', () => {
+    // SubwayStationLayer renders nothing in DOM (uses MapLibre markers),
+    // so we just verify App renders without throwing when it is included
+    const { getByTestId } = render(<App />)
+    expect(getByTestId('app-root')).toBeInTheDocument()
   })
 })
