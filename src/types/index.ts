@@ -59,3 +59,73 @@ export interface Location {
   lng: number
   lat: number
 }
+
+// Cultural event from Seoul API
+export interface CulturalEvent {
+  title: string
+  category: string
+  place: string
+  startDate: string
+  endDate: string
+  lat: number
+  lng: number
+  guName: string
+  orgLink: string
+  mainImg: string
+  useFee: string
+}
+
+// Ranked area for ranking panel
+export interface RankedArea {
+  code: string
+  name: string
+  congestionLevel: CongestionLevel
+  populationAvg: number
+  events: CulturalEvent[]
+}
+
+// Prediction types (interfaces only - Phase 5)
+export interface SubwayArrival {
+  stationName: string
+  lineId: string
+  direction: string
+  arrivalTime: number
+  congestion: 'low' | 'medium' | 'high'
+}
+
+export interface TrafficSegment {
+  roadName: string
+  speed: number
+  congestion: 'smooth' | 'slow' | 'congested'
+  lat: number
+  lng: number
+}
+
+export interface PredictionInput {
+  areaCode: string
+  currentPopulation: number
+  currentCongestion: CongestionLevel
+  subwayArrivals: SubwayArrival[]
+  trafficSegments: TrafficSegment[]
+  activeEvents: CulturalEvent[]
+  hour: number
+  dayOfWeek: number
+}
+
+export interface CongestionPrediction {
+  areaCode: string
+  predictions: Array<{
+    hour: number
+    predictedLevel: CongestionLevel
+    predictedPopulation: number
+    confidence: number
+  }>
+  factors: PredictionFactor[]
+}
+
+export interface PredictionFactor {
+  type: 'event' | 'subway' | 'traffic' | 'time' | 'weather'
+  description: string
+  impact: 'increase' | 'decrease' | 'neutral'
+  weight: number
+}
