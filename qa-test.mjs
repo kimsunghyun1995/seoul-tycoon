@@ -97,7 +97,27 @@ try {
   });
   await page.waitForTimeout(2000);
 
-  // 19. Final full-page screenshot
+  // 19. Check ranking toggle button exists
+  const rankingToggle = await page.locator('[data-testid="ranking-toggle"]').count();
+  check('Ranking toggle button present', rankingToggle > 0);
+
+  // 20. Click ranking toggle to open panel
+  await page.locator('[data-testid="ranking-toggle"]').click();
+  await page.waitForTimeout(1000);
+  const rankingPanel = await page.locator('[data-testid="ranking-panel"]').count();
+  check('Ranking panel opens on toggle click', rankingPanel > 0);
+  await page.screenshot({ path: 'qa-screenshots/05-ranking-panel.png', type: 'png' });
+  check('Ranking panel screenshot captured', true);
+
+  // 21. Check ranking panel has sort dropdown
+  const sortDropdown = await page.locator('[data-testid="ranking-panel-sort"]').count();
+  check('Ranking panel sort dropdown present', sortDropdown > 0);
+
+  // 22. Close ranking panel
+  await page.locator('[data-testid="ranking-panel-close"]').click();
+  await page.waitForTimeout(500);
+
+  // 23. Final full-page screenshot
   await page.screenshot({ path: 'qa-screenshots/04-final-state.png', type: 'png' });
   check('Final screenshot captured', true);
 
