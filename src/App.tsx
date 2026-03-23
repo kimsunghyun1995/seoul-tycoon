@@ -124,7 +124,7 @@ export default function App() {
       {lastUpdated && !loading && (
         <div
           data-testid="last-updated"
-          className="absolute bottom-20 right-4 z-10 text-xs text-gray-500"
+          className="absolute bottom-4 left-4 z-10 text-xs text-gray-500"
           style={{ background: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '2px 8px' }}
         >
           업데이트: {lastUpdated.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}

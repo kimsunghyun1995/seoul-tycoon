@@ -32,8 +32,10 @@ export default function LandmarkLayer({ map }: LandmarkLayerProps) {
     if (!map) return
 
     const addMarkers = () => {
+      console.log('[LandmarkLayer] Adding', LANDMARKS.length, 'landmarks, styleLoaded:', map.isStyleLoaded())
       for (const landmark of LANDMARKS) {
         const el = document.createElement('div')
+        el.className = 'landmark-marker'
         el.style.cssText = [
           'display:flex',
           'flex-direction:column',
@@ -68,11 +70,9 @@ export default function LandmarkLayer({ map }: LandmarkLayerProps) {
       }
     }
 
-    if (map.isStyleLoaded()) {
-      addMarkers()
-    } else {
-      map.once('load', addMarkers)
-    }
+    // Always add markers directly — map is guaranteed loaded because
+    // App only sets mapInstance after the 'load' event fires
+    addMarkers()
 
     return () => {
       for (const marker of markersRef.current) {

@@ -27,7 +27,7 @@
       "description": "The hotspot circle markers are too small to see on the map. Fix HotspotMarker.tsx: (1) Increase circle-radius from 5 to 12 for normal markers, 16 for selected. (2) Increase ring-radius from 10 to 20 for normal, 26 for selected. (3) Increase circle-stroke-width to 2.5 normal, 3 selected. (4) Add circle-opacity 0.9 for better visibility. (5) Lower label minzoom from 12 to 11 so names show earlier. (6) Increase text-size from 10 to 12. (7) Add a subtle shadow effect by adding another circle layer behind with slight offset and blur-like opacity.",
       "test_command": "npm test",
       "acceptance": "Hotspot markers clearly visible at zoom level 11. Each marker has a distinct colored dot with white border. Labels visible when zooming in slightly.",
-      "passes": true
+      "passes": false
     },
     {
       "id": "V5-2",
@@ -35,7 +35,7 @@
       "description": "The CharacterSystem is commented out in App.tsx. Re-enable it: (1) Uncomment the CharacterSystem import and JSX in App.tsx. (2) Uncomment the populationMap computation. (3) The CharacterSystem already has MapLibre integration via map.project() - verify it works by checking that characters appear at hotspot locations. (4) If characters don't appear, debug the PixiJS canvas positioning - it should be positioned absolutely over the MapLibre canvas with pointer-events:none. (5) Ensure characters move with map pan/zoom by re-projecting on each frame. (6) Characters should be VISIBLE - not 1-2px dots but small cute stick figures (head 3px, body 4x6px, legs). At zoom 11 they should be visible as small colored figures, not invisible dots. Adjust character graphics sizes in createCharacterGraphics and drawLegs if needed.",
       "test_command": "npm test",
       "acceptance": "Colorful animated characters walk around at each hotspot location. Characters move correctly when panning/zooming the map. Characters are visible at default zoom level 11.",
-      "passes": true
+      "passes": false
     },
     {
       "id": "V5-3",
@@ -43,7 +43,7 @@
       "description": "Add major Seoul landmarks as custom HTML markers on the MapLibre map. Create a new LandmarkLayer component. Landmarks to add with their coordinates: (1) 경복궁 (126.977, 37.579) - 🏯 emoji or simple palace icon. (2) 남산타워 (126.988, 37.551) - 🗼 tower emoji. (3) 롯데월드타워 (127.103, 37.513) - 🏢 tall building. (4) 63빌딩 (126.940, 37.520) - 🏛️. (5) DDP (127.009, 37.567) - 🏟️ curved building. (6) 코엑스 (127.059, 37.512) - 🏬. (7) 김포공항 (126.801, 37.559) - ✈️. (8) 올림픽공원 (127.122, 37.521) - 🏅. (9) 월드컵경기장 (126.897, 37.568) - ⚽. (10) 국회의사당 (126.918, 37.532) - 🏛️. Each landmark is a MapLibre Marker with a custom HTML element: a small div with emoji icon (24px) and Korean label below (10px font, white text-shadow). Landmarks should not be interactive (no click handler), just decorative.",
       "test_command": "npm test",
       "acceptance": "10 landmark icons visible on the map at correct locations with Korean labels. Icons are 24px emoji with text below. They don't interfere with hotspot marker clicks.",
-      "passes": true
+      "passes": false
     },
     {
       "id": "V5-4",
@@ -51,7 +51,7 @@
       "description": "Improve character appearance to look like cute tiny walking people, not just dots. In CharacterSystem.tsx: (1) Make characters bigger - head radius 3px, body 5x7px rectangle, visible legs. Total height ~16px. (2) Each character has a random pastel body color from BODY_COLORS. (3) Walking animation: legs swing back and forth (sin-based phase). (4) Slight bounce effect while walking (translateY oscillation). (5) Characters should be clearly visible at zoom 11-12 as tiny colorful people. (6) At zoom 13+ they should show more detail. (7) Cap characters per hotspot at 50 max (not 500) for performance with the bigger size. Scale: 1 per 500 people instead of 1 per 100. (8) Hotspot radius should scale with zoom level using map.project distance.",
       "test_command": "npm test",
       "acceptance": "Characters appear as cute tiny walking people with colored bodies and animated legs. They are clearly visible at zoom 11. Busy areas show many characters creating a 'bustling' effect.",
-      "passes": true
+      "passes": false
     }
   ],
   "test_commands": {
