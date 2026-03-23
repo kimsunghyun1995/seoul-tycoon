@@ -1,3 +1,69 @@
 # Ralph Progress Log
 Started: Fri Mar 20 17:28:59 KST 2026
 ---
+
+## Codebase Patterns
+- MapView.tsx MUST use style: 'https://tiles.openfreemap.org/styles/liberty' - do not change to custom style JSON
+- MapView.tsx useEffect MUST have empty [] dependency and mapInstanceRef guard - do not change
+- HotspotMarker.tsx uses GeoJSON source + multiple circle layers; test expects exact layer count - update test when adding layers
+- CharacterSystem.tsx uses PixiJS v8 API (app.init async, Graphics.fill/stroke methods) - not v7 syntax
+- MapLibre Marker with custom HTML element: use `element` option and `anchor: 'bottom'`
+- MapView container uses inline style (position:absolute), not className - tests should check style attribute
+
+---
+
+## 2026-03-23 - V5-1
+- Increased hotspot marker sizes: circle 5→12px (normal), 8→16px (selected)
+- Increased ring radius: 10→20 (normal), 14→26 (selected)
+- Added shadow layer (4th GeoJSON layer) behind circles for depth effect
+- circle-stroke-width: 1.5→2.5 (normal), 2→3 (selected)
+- Added circle-opacity: 0.9
+- Label minzoom: 12→11, text-size: 10→12
+- Updated HotspotMarker test to expect 4 layers (was 3)
+- Fixed MapView test: check style.position instead of className
+- Files changed: src/components/HotspotMarker.tsx, src/test/HotspotMarker.test.tsx, src/test/MapView.test.tsx
+- **Learnings:**
+  - When adding MapLibre layers, update test that checks `addLayer` call count
+  - MapView uses inline style not Tailwind className for positioning
+
+---
+
+## 2026-03-23 - V5-2
+- Re-enabled CharacterSystem import and JSX in App.tsx
+- Re-enabled populationMap useMemo computation
+- Increased character graphic sizes for zoom 11 visibility:
+  - Head: 1.5→3px radius, Body: 2x3→4x6px, Legs: 0.8→1.5px width
+  - Dot mode (low zoom): 2→3.5px radius
+- Files changed: src/App.tsx, src/components/CharacterSystem.tsx
+- **Learnings:**
+  - PixiJS canvas is positioned absolutely over MapLibre canvas with pointer-events:none
+  - Characters re-project each frame via map.project() - handles pan/zoom automatically
+
+---
+
+## 2026-03-23 - V5-3
+- Created LandmarkLayer component with 10 Seoul landmarks
+- Each landmark: MapLibre Marker with custom HTML element (emoji 24px + Korean label 10px)
+- Landmarks: 경복궁🏯, 남산타워🗼, 롯데월드타워🏢, 63빌딩🏛️, DDP🏟️, 코엑스🏬, 김포공항✈️, 올림픽공원🏅, 월드컵경기장⚽, 국회의사당🏛️
+- pointer-events:none on markers so hotspot clicks still work
+- Files changed: src/components/LandmarkLayer.tsx (new), src/App.tsx
+- **Learnings:**
+  - MapLibre Marker with custom element: `new maplibregl.Marker({ element: el, anchor: 'bottom' })`
+  - Use `map.once('load', ...)` for one-time setup when style may not be loaded
+
+---
+
+## 2026-03-23 - V5-4
+- Character body: head 3px, body 5x7px rect, legs total height ~16px
+- Bounce effect: sin-based Y oscillation while walking (bouncePhase field added)
+- Leg animation speed: 0.15→0.18 dt multiplier
+- Detail zoom threshold: 14→13 (show full detail sooner)
+- Dot mode radius: 3.5→4px
+- Max chars per hotspot: 500→50, scale 1/100→1/500 people
+- Hotspot radius scales with zoom: `getHotspotRadius(count, zoom)` uses zoomFactor = 2^(zoom-11)
+- Radius updated dynamically per ticker frame
+- Files changed: src/components/CharacterSystem.tsx
+- **Learnings:**
+  - Zoom-scaled radius: `Math.pow(2, zoom - 11)` doubles radius per zoom level
+  - bouncePhase should advance only while 'walking' state to avoid drift
+---
