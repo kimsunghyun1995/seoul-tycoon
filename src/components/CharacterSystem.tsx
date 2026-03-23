@@ -3,29 +3,30 @@ import { Application, Graphics, Container, Ticker } from 'pixi.js'
 import type { CongestionLevel, Location } from '../types'
 import type { Map as MaplibreMap } from 'maplibre-gl'
 
-const CHARS_PER_100_PEOPLE = 1
-const MAX_CHARS_PER_HOTSPOT = 500
+const CHARS_PER_500_PEOPLE = 1
+const MAX_CHARS_PER_HOTSPOT = 50
 const CONGESTION_FALLBACK_COUNT: Record<CongestionLevel, number> = {
   '여유': 3,
   '보통': 8,
   '약간 붐빔': 15,
-  '붐빔': 30,
+  '붐빔': 25,
 }
 
 function populationToCharCount(population: number | undefined, congestion: CongestionLevel): number {
   if (population != null && population > 0) {
-    return Math.min(MAX_CHARS_PER_HOTSPOT, Math.floor(population / 100 * CHARS_PER_100_PEOPLE))
+    return Math.min(MAX_CHARS_PER_HOTSPOT, Math.floor(population / 500 * CHARS_PER_500_PEOPLE))
   }
   return CONGESTION_FALLBACK_COUNT[congestion]
 }
 
-const BASE_HOTSPOT_RADIUS = 30
-const WALK_SPEED = 0.3
-// At MapLibre zoom >= 14, render full character detail; below: dots only
-const DETAIL_ZOOM_THRESHOLD = 14
+const WALK_SPEED = 0.4
+// At MapLibre zoom >= 13, render full character detail; below: simplified
+const DETAIL_ZOOM_THRESHOLD = 13
 
-function getHotspotRadius(charCount: number): number {
-  return Math.max(BASE_HOTSPOT_RADIUS, Math.sqrt(charCount) * 3)
+function getHotspotRadius(charCount: number, zoom: number): number {
+  // Scale hotspot radius with zoom: more spread at higher zoom
+  const zoomFactor = Math.pow(2, zoom - 11)
+  return Math.max(20, Math.sqrt(charCount) * 4) * zoomFactor
 }
 
 const BODY_COLORS = [
@@ -50,6 +51,7 @@ interface Character {
   targetOffsetX: number
   targetOffsetY: number
   phase: number
+  bouncePhase: number
   alpha: number
   state: 'spawning' | 'walking' | 'despawning'
   bodyColor: number
@@ -58,29 +60,36 @@ interface Character {
 function createCharacterGraphics(bodyColor: number): Graphics {
   const g = new Graphics()
   // Head (radius 3px)
-  g.circle(0, -7, 3)
+  g.circle(0, -8, 3)
   g.fill({ color: 0xffe4c4 })
-  // Body (4x6px)
-  g.roundRect(-2, -4, 4, 6, 1)
+  // Body (5x7px)
+  g.roundRect(-2.5, -5, 5, 7, 1)
   g.fill({ color: bodyColor })
+  // Static legs
+  g.moveTo(-1, 2)
+  g.lineTo(-1, 6)
+  g.stroke({ color: bodyColor, width: 1.5 })
+  g.moveTo(1, 2)
+  g.lineTo(1, 6)
+  g.stroke({ color: bodyColor, width: 1.5 })
   return g
 }
 
 function drawLegs(g: Graphics, phase: number, bodyColor: number): void {
   g.clear()
   // Head
-  g.circle(0, -7, 3)
+  g.circle(0, -8, 3)
   g.fill({ color: 0xffe4c4 })
   // Body
-  g.roundRect(-2, -4, 4, 6, 1)
+  g.roundRect(-2.5, -5, 5, 7, 1)
   g.fill({ color: bodyColor })
-  // Legs
-  const legSwing = Math.sin(phase) * 2
+  // Animated legs with swing
+  const legSwing = Math.sin(phase) * 2.5
   g.moveTo(-1, 2)
-  g.lineTo(-1 + legSwing, 6)
+  g.lineTo(-1 + legSwing, 7)
   g.stroke({ color: bodyColor, width: 1.5 })
   g.moveTo(1, 2)
-  g.lineTo(1 - legSwing, 6)
+  g.lineTo(1 - legSwing, 7)
   g.stroke({ color: bodyColor, width: 1.5 })
 }
 
@@ -110,6 +119,7 @@ function spawnCharacter(homeLng: number, homeLat: number, bodyColor: number, rad
     targetOffsetX: targetOffset.x,
     targetOffsetY: targetOffset.y,
     phase: Math.random() * Math.PI * 2,
+    bouncePhase: Math.random() * Math.PI * 2,
     alpha: 0,
     state: 'spawning',
     bodyColor,
@@ -182,6 +192,8 @@ export default function CharacterSystem({ map, locations, congestionMap, populat
 
       hotspots.forEach(state => {
         const { characters, targetCount, location } = state
+        // Update radius dynamically based on current zoom
+        state.radius = getHotspotRadius(targetCount, zoom)
 
         if (doSpawnDespawn) {
           if (characters.length < targetCount) {
@@ -240,19 +252,26 @@ export default function CharacterSystem({ map, locations, congestionMap, populat
               char.offsetX += (dx / dist) * WALK_SPEED * dt
               char.offsetY += (dy / dist) * WALK_SPEED * dt
             }
+
+            // Bounce phase advances while walking
+            char.bouncePhase += 0.2 * dt
           }
+
+          // Bounce effect: slight vertical oscillation while walking
+          const bounceY = char.state === 'walking' ? Math.sin(char.bouncePhase * 2) * 0.8 : 0
 
           // Always update screen position (including despawning chars)
           char.container.x = projected.x + char.offsetX
-          char.container.y = projected.y + char.offsetY
+          char.container.y = projected.y + char.offsetY + bounceY
 
           if (char.state === 'walking' || char.state === 'spawning') {
             if (showDetail) {
-              char.phase += 0.15 * dt
+              char.phase += 0.18 * dt
               drawLegs(char.graphics, char.phase, char.bodyColor)
             } else {
+              // Simplified: colored circle for zoom < DETAIL_ZOOM_THRESHOLD
               char.graphics.clear()
-              char.graphics.circle(0, -2, 3.5)
+              char.graphics.circle(0, -2, 4)
               char.graphics.fill({ color: char.bodyColor })
             }
           }
@@ -296,13 +315,13 @@ export default function CharacterSystem({ map, locations, congestionMap, populat
       const congestion = congestionMap.get(loc.code) ?? '여유'
       const population = populationMap?.get(loc.code)
       const targetCount = populationToCharCount(population, congestion)
-      const radius = getHotspotRadius(targetCount)
+      const radius = getHotspotRadius(targetCount, mapRef.current?.getZoom() ?? 11)
 
       const existing = hotspots.get(loc.code)
       if (existing) {
         existing.congestion = congestion
         existing.targetCount = targetCount
-        existing.radius = radius
+        // radius is updated dynamically per frame in the ticker based on zoom
         existing.location = loc
       } else {
         hotspots.set(loc.code, {
