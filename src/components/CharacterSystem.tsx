@@ -57,26 +57,31 @@ interface Character {
 
 function createCharacterGraphics(bodyColor: number): Graphics {
   const g = new Graphics()
-  g.circle(0, -4, 1.5)
+  // Head (radius 3px)
+  g.circle(0, -7, 3)
   g.fill({ color: 0xffe4c4 })
-  g.roundRect(-1, -2.5, 2, 3, 0.5)
+  // Body (4x6px)
+  g.roundRect(-2, -4, 4, 6, 1)
   g.fill({ color: bodyColor })
   return g
 }
 
 function drawLegs(g: Graphics, phase: number, bodyColor: number): void {
   g.clear()
-  g.circle(0, -4, 1.5)
+  // Head
+  g.circle(0, -7, 3)
   g.fill({ color: 0xffe4c4 })
-  g.roundRect(-1, -2.5, 2, 3, 0.5)
+  // Body
+  g.roundRect(-2, -4, 4, 6, 1)
   g.fill({ color: bodyColor })
-  const legSwing = Math.sin(phase) * 1
-  g.moveTo(-0.5, 0.5)
-  g.lineTo(-0.5 + legSwing, 2.5)
-  g.stroke({ color: bodyColor, width: 0.8 })
-  g.moveTo(0.5, 0.5)
-  g.lineTo(0.5 - legSwing, 2.5)
-  g.stroke({ color: bodyColor, width: 0.8 })
+  // Legs
+  const legSwing = Math.sin(phase) * 2
+  g.moveTo(-1, 2)
+  g.lineTo(-1 + legSwing, 6)
+  g.stroke({ color: bodyColor, width: 1.5 })
+  g.moveTo(1, 2)
+  g.lineTo(1 - legSwing, 6)
+  g.stroke({ color: bodyColor, width: 1.5 })
 }
 
 function randomOffset(r: number): { x: number; y: number } {
@@ -247,7 +252,7 @@ export default function CharacterSystem({ map, locations, congestionMap, populat
               drawLegs(char.graphics, char.phase, char.bodyColor)
             } else {
               char.graphics.clear()
-              char.graphics.circle(0, -2, 2)
+              char.graphics.circle(0, -2, 3.5)
               char.graphics.fill({ color: char.bodyColor })
             }
           }
