@@ -1,30 +1,39 @@
 /**
  * CORS proxy wrapper for API calls.
- * In development, uses Vite proxy.
- * In production (GitHub Pages), uses allorigins CORS proxy service.
+ * In development, uses Vite proxy directly.
+ * In production (GitHub Pages), uses corsproxy.io CORS proxy.
  */
+
+const CORS_PROXIES = [
+  (url: string) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+]
+
 export async function fetchWithCorsProxy(url: string): Promise<Response> {
   if (import.meta.env.DEV) {
-    // In dev, use Vite proxy
     return fetch(url)
   }
 
-  // In production, use allorigins CORS proxy service
-  const corsUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
-  const response = await fetch(corsUrl)
-
-  if (!response.ok) {
-    throw new Error(`CORS proxy error: ${response.status}`)
+  // Try each proxy in order until one succeeds
+  let lastError: Error | null = null
+  for (const makeProxyUrl of CORS_PROXIES) {
+    try {
+      const response = await fetch(makeProxyUrl(url))
+      if (response.ok) return response
+      if (response.status === 429) {
+        lastError = new Error(`Rate limited (429)`)
+        continue
+      }
+      return response
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err))
+    }
   }
 
-  const data = await response.json()
+  throw lastError ?? new Error('All CORS proxies failed')
+}
 
-  // allorigins returns { contents: string, status: number, ... }
-  // contents is a JSON string, so parse it
-  const jsonString = typeof data.contents === 'string' ? data.contents : JSON.stringify(data.contents)
-
-  return new Response(jsonString, {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  })
+/** Delay helper for rate-limiting in production */
+export function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }

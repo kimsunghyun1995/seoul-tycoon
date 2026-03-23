@@ -1,9 +1,10 @@
 import type { AreaData, PopulationData, WeatherData, CongestionLevel, AirQualityLevel } from '../types'
-import { fetchWithCorsProxy } from './corsProxy'
+import { fetchWithCorsProxy, delay } from './corsProxy'
 
-// Use Vite dev proxy to avoid CORS; in production use allorigins CORS proxy
+// Use Vite proxy in dev; direct URL in production (CORS proxy wraps it)
 const API_BASE = import.meta.env.DEV ? '/api/seoul' : 'http://openapi.seoul.go.kr:8088'
-const CONCURRENCY_LIMIT = 5
+const CONCURRENCY_LIMIT = import.meta.env.DEV ? 5 : 3
+const BATCH_DELAY_MS = import.meta.env.DEV ? 0 : 1000
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,8 +104,11 @@ export class SeoulApiService {
 
   async fetchAreas(areaNames: string[]): Promise<Map<string, AreaData>> {
     const results = new Map<string, AreaData>()
-    // Process in batches of CONCURRENCY_LIMIT
+    // Process in batches with delay between batches (avoids CORS proxy rate limits)
     for (let i = 0; i < areaNames.length; i += CONCURRENCY_LIMIT) {
+      if (i > 0 && BATCH_DELAY_MS > 0) {
+        await delay(BATCH_DELAY_MS)
+      }
       const batch = areaNames.slice(i, i + CONCURRENCY_LIMIT)
       const settled = await Promise.allSettled(
         batch.map(name => this.fetchArea(name))
