@@ -16,7 +16,7 @@ export default function RankingCard({ rank, area, onSelect }: RankingCardProps) 
   const congestionBg = CONGESTION_BG[area.congestionLevel]
   const hasEvents = area.events.length > 0
 
-  const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32']
+  const rankColors = ['#ffd700', '#8a8a8a', '#cd7f32']
   const rankBg = rank <= 3 ? rankColors[rank - 1] : '#e0e0e0'
 
   return (
@@ -50,7 +50,7 @@ export default function RankingCard({ rank, area, onSelect }: RankingCardProps) 
             flexShrink: 0,
             fontWeight: 700,
             fontSize: '13px',
-            color: rank <= 3 ? '#333' : '#666',
+            color: rank === 2 ? '#fff' : rank <= 3 ? '#333' : '#666',
           }}
         >
           #{rank}

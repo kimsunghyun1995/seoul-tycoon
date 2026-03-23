@@ -26,7 +26,7 @@ export function WeatherBadge({ weather }: WeatherBadgeProps) {
       <div
         data-testid="weather-badge"
         className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
-        style={{ background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(8px)' }}
+        style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)' }}
       >
         <span>--</span>
         <span className="text-white/80">날씨 로딩 중</span>
@@ -40,7 +40,7 @@ export function WeatherBadge({ weather }: WeatherBadgeProps) {
     <div
       data-testid="weather-badge"
       className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
-      style={{ background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(8px)' }}
+      style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)' }}
     >
       <span role="img" aria-label={weather.skyStatus}>{icon}</span>
       <span className="text-white font-bold">{weather.temp}°C</span>
@@ -59,7 +59,7 @@ export function AirQualityBadge({ weather }: AirQualityBadgeProps) {
       <div
         data-testid="air-quality-badge"
         className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
-        style={{ background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(8px)' }}
+        style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)' }}
       >
         <span className="text-white/80">PM2.5 --</span>
       </div>
@@ -73,7 +73,7 @@ export function AirQualityBadge({ weather }: AirQualityBadgeProps) {
     <div
       data-testid="air-quality-badge"
       className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
-      style={{ background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(8px)' }}
+      style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)' }}
     >
       <span
         data-testid="air-quality-indicator"

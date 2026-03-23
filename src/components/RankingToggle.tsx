@@ -17,8 +17,8 @@ export default function RankingToggle({ onClick, busyCount }: RankingToggleProps
         height: '52px',
         borderRadius: '50%',
         border: 'none',
-        background: 'white',
-        boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
+        background: 'linear-gradient(135deg, #ff9800, #f57c00)',
+        boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
@@ -29,12 +29,12 @@ export default function RankingToggle({ onClick, busyCount }: RankingToggleProps
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLButtonElement
         el.style.transform = 'scale(1.1)'
-        el.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)'
+        el.style.boxShadow = '0 6px 20px rgba(0,0,0,0.35)'
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLButtonElement
         el.style.transform = 'scale(1)'
-        el.style.boxShadow = '0 4px 14px rgba(0,0,0,0.2)'
+        el.style.boxShadow = '0 4px 14px rgba(0,0,0,0.3)'
       }}
       aria-label="혼잡 순위 보기"
     >
