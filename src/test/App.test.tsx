@@ -11,8 +11,12 @@ vi.mock('maplibre-gl', () => {
     project() { return { x: 0, y: 0 } }
     getZoom() { return 11 }
     flyTo() {}
+    addControl() {}
+    addSource() {}
+    addLayer() {}
   }
-  return { default: { Map: MockMap } }
+  class MockNavigationControl {}
+  return { default: { Map: MockMap, NavigationControl: MockNavigationControl } }
 })
 
 vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}))

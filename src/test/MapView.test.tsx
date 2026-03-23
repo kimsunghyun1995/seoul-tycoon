@@ -8,8 +8,12 @@ vi.mock('maplibre-gl', () => {
     remove() {}
     project() { return { x: 0, y: 0 } }
     flyTo() {}
+    addControl() {}
+    addSource() {}
+    addLayer() {}
   }
-  return { default: { Map: MockMap } }
+  class MockNavigationControl {}
+  return { default: { Map: MockMap, NavigationControl: MockNavigationControl } }
 })
 
 vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}))

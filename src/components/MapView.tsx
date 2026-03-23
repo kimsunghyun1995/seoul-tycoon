@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import maplibregl, { type Map } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import mapStyle from '../assets/map-style.json'
+import seoulBoundary from '../assets/seoul-boundary.json'
 
 interface MapViewProps {
   mapRef?: React.MutableRefObject<Map | null>
@@ -21,14 +22,38 @@ export default function MapView({ mapRef, onMapLoaded }: MapViewProps) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       style: mapStyle as any,
       center: [126.978, 37.5665],
-      zoom: 11,
+      zoom: 9,
       minZoom: 9,
       maxZoom: 18,
     })
 
     if (mapRef) mapRef.current = map
 
+    // Add navigation control (zoom +/-, compass)
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right')
+
     map.on('load', () => {
+      // Fly-in animation from zoom 9 to 11 over 2 seconds
+      map.flyTo({ center: [126.978, 37.5665], zoom: 11, duration: 2000, essential: true })
+
+      // Seoul boundary outline layer
+      map.addSource('seoul-boundary', {
+        type: 'geojson',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: seoulBoundary as any,
+      })
+      map.addLayer({
+        id: 'seoul-boundary-line',
+        type: 'line',
+        source: 'seoul-boundary',
+        paint: {
+          'line-color': '#aaa',
+          'line-width': 1.5,
+          'line-dasharray': [4, 3],
+          'line-opacity': 0.6,
+        },
+      })
+
       onMapLoadedRef.current?.(map)
     })
 
