@@ -1,9 +1,8 @@
-import { useEffect, useRef } from 'react'
-import maplibregl, { type Map } from 'maplibre-gl'
+import { useEffect, useRef, useState } from 'react'
+import maplibregl, { type Map, type StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import seoulBoundary from '../assets/seoul-boundary.json'
 
-// Use the proven OpenFreeMap liberty style directly - it works out of the box
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty'
 
 interface MapViewProps {
@@ -15,13 +14,47 @@ export default function MapView({ mapRef, onMapLoaded }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const onMapLoadedRef = useRef(onMapLoaded)
   onMapLoadedRef.current = onMapLoaded
+  const [style, setStyle] = useState<StyleSpecification | null>(null)
 
+  // Fetch style JSON and patch for MapLibre v5 compatibility
   useEffect(() => {
-    if (!containerRef.current) return
+    fetch(STYLE_URL)
+      .then(res => res.json())
+      .then((json: StyleSpecification) => {
+        // Ensure projection field exists (required by MapLibre v5)
+        if (!json.projection) {
+          json.projection = { type: 'mercator' }
+        }
+        setStyle(json)
+      })
+      .catch(err => {
+        console.error('Failed to fetch map style:', err)
+        // Fallback: minimal working style
+        setStyle({
+          version: 8,
+          sources: {
+            osm: {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '© OpenStreetMap',
+            },
+          },
+          layers: [
+            { id: 'osm', type: 'raster', source: 'osm' },
+          ],
+          projection: { type: 'mercator' },
+        } as unknown as StyleSpecification)
+      })
+  }, [])
+
+  // Initialize map once style is loaded
+  useEffect(() => {
+    if (!containerRef.current || !style) return
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: STYLE_URL,
+      style,
       center: [126.978, 37.5665],
       zoom: 9,
       minZoom: 9,
@@ -30,14 +63,11 @@ export default function MapView({ mapRef, onMapLoaded }: MapViewProps) {
 
     if (mapRef) mapRef.current = map
 
-    // Add navigation control (zoom +/-, compass)
     map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right')
 
     map.on('load', () => {
-      // Fly-in animation from zoom 9 to 11 over 2 seconds
       map.flyTo({ center: [126.978, 37.5665], zoom: 11, duration: 2000, essential: true })
 
-      // Seoul boundary outline layer
       map.addSource('seoul-boundary', {
         type: 'geojson',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,7 +92,7 @@ export default function MapView({ mapRef, onMapLoaded }: MapViewProps) {
       map.remove()
       if (mapRef) mapRef.current = null
     }
-  }, [mapRef])
+  }, [mapRef, style])
 
   return (
     <div
