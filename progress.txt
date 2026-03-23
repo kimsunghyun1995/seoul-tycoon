@@ -103,3 +103,18 @@ Started: Fri Mar 20 17:28:59 KST 2026
   - For native Map in types/params, use `globalThis.Map<K, V>` to disambiguate when maplibre Map is also in scope
   - `vi.fn().mock.calls.find()` with destructured tuple params needs `(call: unknown[])` type, not destructured tuple, to avoid TS overload errors
 ---
+
+## 2026-03-23 - V4-7
+- Added NavigationControl (zoom +/-, compass) to MapView via `map.addControl(new maplibregl.NavigationControl(...))`
+- Added fly-in animation: map initializes at zoom 9, then `map.flyTo({ zoom: 11, duration: 2000 })` on load
+- Added Seoul boundary GeoJSON layer: `src/assets/seoul-boundary.json` (simplified polygon, ~20 points)
+  - Added as GeoJSON source + `line` layer with dashed light gray style (opacity 0.6)
+- Updated MapView test mock: added `NavigationControl` class, `addControl`, `addSource`, `addLayer` methods
+- Updated App test mock: same additions
+- Updated README: removed SVG map references, added MapLibre + OpenFreeMap info
+- Build succeeds, all 68 tests pass
+- **Learnings for future iterations:**
+  - When adding maplibre controls, test mocks need `NavigationControl` as a class AND `addControl` on MockMap
+  - maplibre `flyTo` can be called inside `map.on('load', ...)` — safe because mock `on` doesn't fire
+  - Seoul boundary JSON can be a simple polygon (src/assets/seoul-boundary.json); Vite imports JSON natively
+---

@@ -79,7 +79,7 @@
       "description": "Final polish pass: (1) Remove all unused SVG-related code, old SeoulMap districts/mountains/landmarks/trees data. (2) Add Seoul boundary outline on the map as a subtle GeoJSON polygon layer (light dashed line) to visually define the coverage area. (3) Add map controls: zoom +/- buttons (bottom-right, small pastel-styled), compass/north indicator. (4) Smooth initial fly-in animation when map loads (MapLibre flyTo from zoom 9 to 11 over 2 seconds). (5) Ensure mobile responsiveness: touch gestures work, UI elements don't overlap. (6) Update README with new setup instructions mentioning MapLibre. (7) Clean up any unused dependencies.",
       "test_command": "npm run build && npm test",
       "acceptance": "No dead code remaining. Map has zoom controls and compass. Initial load has smooth fly-in animation. Mobile touch works properly. README updated.",
-      "passes": false
+      "passes": true
     }
   ],
   "test_commands": {
