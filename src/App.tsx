@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useCallback } from 'react'
 import MapView from './components/MapView'
 import { HotspotLayer } from './components/HotspotMarker'
 import CharacterSystem from './components/CharacterSystem'
+import LandmarkLayer from './components/LandmarkLayer'
 import TopBar from './components/TopBar'
 import BottomSheet from './components/BottomSheet'
 import WeatherOverlay, { getDayPeriod } from './components/WeatherOverlay'
@@ -76,6 +77,7 @@ export default function App() {
           selectedCode={selectedCode}
           onSelect={setSelectedCode}
         />
+        <LandmarkLayer map={mapInstance} />
         <CharacterSystem
           map={mapInstance}
           locations={LOCATIONS}
