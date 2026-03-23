@@ -1,4 +1,5 @@
 import type { CulturalEvent } from '../types'
+import { fetchWithCorsProxy } from './corsProxy'
 
 const API_BASE = import.meta.env.DEV ? '/api/seoul' : 'http://openapi.seoul.go.kr:8088'
 
@@ -51,7 +52,7 @@ export class EventApiService {
     const apiKey = import.meta.env.VITE_SEOUL_API_KEY ?? ''
     const url = `${API_BASE}/${apiKey}/json/culturalEventInfo/1/1000/`
 
-    const response = await fetch(url)
+    const response = await fetchWithCorsProxy(url)
     if (!response.ok) {
       throw new Error(`EventApiService: HTTP error ${response.status}`)
     }

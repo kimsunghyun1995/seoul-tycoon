@@ -21,7 +21,7 @@
   "bugs": {
     "url": "https://github.com/kimsunghyun1995/seoul-tycoon/issues"
   },
-  "homepage": "https://github.com/kimsunghyun1995/seoul-tycoon#readme",
+  "homepage": "https://kimsunghyun1995.github.io/seoul-tycoon/",
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",

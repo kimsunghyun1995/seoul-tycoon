@@ -1,6 +1,7 @@
 import type { AreaData, PopulationData, WeatherData, CongestionLevel, AirQualityLevel } from '../types'
+import { fetchWithCorsProxy } from './corsProxy'
 
-// Use Vite dev proxy to avoid CORS; in production use a serverless proxy
+// Use Vite dev proxy to avoid CORS; in production use allorigins CORS proxy
 const API_BASE = import.meta.env.DEV ? '/api/seoul' : 'http://openapi.seoul.go.kr:8088'
 const CONCURRENCY_LIMIT = 5
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
@@ -82,7 +83,7 @@ export class SeoulApiService {
 
   async fetchArea(areaName: string): Promise<AreaData> {
     const url = `${API_BASE}/${this.apiKey}/json/citydata/1/5/${encodeURIComponent(areaName)}`
-    const response = await fetch(url)
+    const response = await fetchWithCorsProxy(url)
     if (!response.ok) {
       throw new Error(`API error: ${response.status} for ${areaName}`)
     }
