@@ -82,6 +82,11 @@ export class SeoulApiService {
   }
 
   async fetchArea(areaName: string): Promise<AreaData> {
+    // Return cached data if still fresh
+    if (this.isFresh(areaName)) {
+      return this.cache.get(areaName)!
+    }
+
     const url = INCLUDE_API_KEY
       ? `${API_BASE}/${this.apiKey}/json/citydata/1/5/${encodeURIComponent(areaName)}`
       : `${API_BASE}/citydata/1/5/${encodeURIComponent(areaName)}`

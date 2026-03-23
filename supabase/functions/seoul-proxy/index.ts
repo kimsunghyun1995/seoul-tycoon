@@ -39,7 +39,12 @@ Deno.serve(async (req: Request) => {
     if (cached && Date.now() < cached.expiry) {
       return new Response(cached.data, {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json", "X-Cache": "HIT" },
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "X-Cache": "HIT",
+          "Cache-Control": "public, max-age=300",
+        },
       })
     }
 
@@ -61,7 +66,12 @@ Deno.serve(async (req: Request) => {
 
     return new Response(data, {
       status: response.status,
-      headers: { ...corsHeaders, "Content-Type": "application/json", "X-Cache": "MISS" },
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "X-Cache": "MISS",
+        "Cache-Control": "public, max-age=300",
+      },
     })
   } catch (err) {
     return new Response(
