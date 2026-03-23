@@ -28,7 +28,9 @@ describe('MapView', () => {
     const { getByTestId } = render(<MapView />)
     const container = getByTestId('map-container')
     expect(container).toBeInTheDocument()
-    // Container has absolute positioning class
-    expect(container.className).toContain('absolute')
+    // Container has absolute positioning via inline style
+    expect(container.style.position).toBe('absolute')
+    expect(container.style.width).toBe('100%')
+    expect(container.style.height).toBe('100%')
   })
 })

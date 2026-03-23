@@ -41,11 +41,11 @@ describe('HotspotLayer', () => {
     expect(container.firstChild).toBeNull()
   })
 
-  it('adds GeoJSON source and 3 layers when map is ready', () => {
+  it('adds GeoJSON source and 4 layers when map is ready', () => {
     const map = createMockMap()
     render(<HotspotLayer map={map as unknown as import('maplibre-gl').Map} locations={LOCATIONS} />)
     expect(map.addSource).toHaveBeenCalledWith('hotspots', expect.objectContaining({ type: 'geojson' }))
-    expect(map.addLayer).toHaveBeenCalledTimes(3)
+    expect(map.addLayer).toHaveBeenCalledTimes(4)
   })
 
   it('includes all 122 locations in GeoJSON source', () => {

@@ -4,6 +4,7 @@ import type { CongestionLevel, Location } from '../types'
 import { CONGESTION_COLOR } from '../constants/colors'
 
 const SOURCE_ID = 'hotspots'
+const SHADOW_LAYER_ID = 'hotspot-shadows'
 const RING_LAYER_ID = 'hotspot-rings'
 const CIRCLE_LAYER_ID = 'hotspot-circles'
 const LABEL_LAYER_ID = 'hotspot-labels'
@@ -61,13 +62,26 @@ export function HotspotLayer({
 
       map.addSource(SOURCE_ID, { type: 'geojson', data: geoJson })
 
+      // Shadow layer (behind everything, slight blur effect via opacity+size)
+      map.addLayer({
+        id: SHADOW_LAYER_ID,
+        type: 'circle',
+        source: SOURCE_ID,
+        paint: {
+          'circle-radius': ['case', ['==', ['get', 'code'], selectedCode ?? ''], 22, 16],
+          'circle-color': '#000000',
+          'circle-opacity': 0.12,
+          'circle-translate': [1, 2],
+        },
+      })
+
       // Outer pulse ring
       map.addLayer({
         id: RING_LAYER_ID,
         type: 'circle',
         source: SOURCE_ID,
         paint: {
-          'circle-radius': ['case', ['==', ['get', 'code'], selectedCode ?? ''], 14, 10],
+          'circle-radius': ['case', ['==', ['get', 'code'], selectedCode ?? ''], 26, 20],
           'circle-color': ['get', 'color'],
           'circle-opacity': 0.25,
         },
@@ -79,9 +93,10 @@ export function HotspotLayer({
         type: 'circle',
         source: SOURCE_ID,
         paint: {
-          'circle-radius': ['case', ['==', ['get', 'code'], selectedCode ?? ''], 8, 5],
+          'circle-radius': ['case', ['==', ['get', 'code'], selectedCode ?? ''], 16, 12],
           'circle-color': ['get', 'color'],
-          'circle-stroke-width': ['case', ['==', ['get', 'code'], selectedCode ?? ''], 2, 1.5],
+          'circle-opacity': 0.9,
+          'circle-stroke-width': ['case', ['==', ['get', 'code'], selectedCode ?? ''], 3, 2.5],
           'circle-stroke-color': 'white',
           'circle-pitch-alignment': 'map',
         },
@@ -92,10 +107,10 @@ export function HotspotLayer({
         id: LABEL_LAYER_ID,
         type: 'symbol',
         source: SOURCE_ID,
-        minzoom: 12,
+        minzoom: 11,
         layout: {
           'text-field': ['get', 'name'],
-          'text-size': 10,
+          'text-size': 12,
           'text-offset': [0, -1.5],
           'text-anchor': 'bottom',
           'text-font': ['Noto Sans Regular'],
@@ -120,12 +135,14 @@ export function HotspotLayer({
   useEffect(() => {
     if (!map || !map.getLayer(CIRCLE_LAYER_ID)) return
 
+    map.setPaintProperty(SHADOW_LAYER_ID, 'circle-radius',
+      ['case', ['==', ['get', 'code'], selectedCode ?? ''], 22, 16])
     map.setPaintProperty(RING_LAYER_ID, 'circle-radius',
-      ['case', ['==', ['get', 'code'], selectedCode ?? ''], 14, 10])
+      ['case', ['==', ['get', 'code'], selectedCode ?? ''], 26, 20])
     map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-radius',
-      ['case', ['==', ['get', 'code'], selectedCode ?? ''], 8, 5])
+      ['case', ['==', ['get', 'code'], selectedCode ?? ''], 16, 12])
     map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-stroke-width',
-      ['case', ['==', ['get', 'code'], selectedCode ?? ''], 2, 1.5])
+      ['case', ['==', ['get', 'code'], selectedCode ?? ''], 3, 2.5])
   }, [map, selectedCode])
 
   // Click and cursor handlers
