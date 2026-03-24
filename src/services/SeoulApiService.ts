@@ -110,12 +110,53 @@ export class SeoulApiService {
 
   async fetchAreas(areaNames: string[]): Promise<Map<string, AreaData>> {
     const results = new Map<string, AreaData>()
-    // Process in batches with delay between batches (avoids CORS proxy rate limits)
-    for (let i = 0; i < areaNames.length; i += CONCURRENCY_LIMIT) {
+
+    // Return all from cache if fresh
+    const staleNames = areaNames.filter(name => !this.isFresh(name))
+    for (const name of areaNames) {
+      const cached = this.cache.get(name)
+      if (cached) results.set(name, cached)
+    }
+    if (staleNames.length === 0) return results
+
+    // Production with Supabase: use bulk endpoint (1 request for all areas)
+    if (!INCLUDE_API_KEY && API_BASE.includes('supabase')) {
+      try {
+        const response = await fetch(`${API_BASE}/bulk`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ areas: staleNames }),
+        })
+        if (response.ok) {
+          const json = await response.json()
+          const bulkResults = json?.results ?? {}
+          for (const [areaName, rawData] of Object.entries(bulkResults)) {
+            if (!rawData) continue
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const cityData = (rawData as any)?.SeoulRtd?.row?.[0] ?? (rawData as any)?.CITYDATA ?? rawData
+            const data: AreaData = {
+              areaCd: cityData?.AREA_CD ?? areaName,
+              areaName,
+              population: parsePopulation(cityData),
+              weather: parseWeather(cityData),
+              fetchedAt: Date.now(),
+            }
+            this.cache.set(areaName, data)
+            results.set(areaName, data)
+          }
+          return results
+        }
+      } catch {
+        // Fallback to individual requests
+      }
+    }
+
+    // Dev mode or fallback: individual requests with batching
+    for (let i = 0; i < staleNames.length; i += CONCURRENCY_LIMIT) {
       if (i > 0 && BATCH_DELAY_MS > 0) {
         await delay(BATCH_DELAY_MS)
       }
-      const batch = areaNames.slice(i, i + CONCURRENCY_LIMIT)
+      const batch = staleNames.slice(i, i + CONCURRENCY_LIMIT)
       const settled = await Promise.allSettled(
         batch.map(name => this.fetchArea(name))
       )
@@ -124,7 +165,6 @@ export class SeoulApiService {
         if (result.status === 'fulfilled') {
           results.set(name, result.value)
         } else {
-          // Use cached data on failure
           const cached = this.cache.get(name)
           if (cached) results.set(name, cached)
         }
