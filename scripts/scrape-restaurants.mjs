@@ -20,21 +20,26 @@ if (!APIFY_TOKEN || !KAKAO_KEY) {
 
 // ── Threads search queries ───────────────────────────────
 const THREADS_QUERIES = [
-  // General
-  '서울 맛집 추천', '서울 핫플 맛집', '서울 맛집 웨이팅', '서울 또간집',
-  // By area
+  // By area (most specific → best results)
   '홍대 맛집', '성수 맛집', '강남 맛집', '이태원 맛집', '망원 맛집',
   '을지로 맛집', '연남동 맛집', '합정 맛집', '압구정 맛집', '잠실 맛집',
   '여의도 맛집', '명동 맛집', '신사 맛집', '서촌 맛집', '익선동 맛집',
-  // By subway
+  // By subway station
   '건대입구 맛집', '왕십리 맛집', '삼성역 맛집', '교대 맛집', '신림 맛집',
+  '홍대입구역 맛집', '신촌 맛집', '이대 맛집', '역삼 맛집', '사당 맛집',
 ]
 
-// ── Known food influencers on Threads ────────────────────
+// ── Verified food influencers on Threads ─────────────────
+// (verified: food_keyword >= 2 in their posts)
 const FOOD_INFLUENCERS = [
-  'editor_dongwon', 'y_not_eat', 'iam_eating_again', 'dasupbubu',
-  'momentdemoment', 'noodlefighter87', 'little_cherry_2026',
-  'bk.pain_clinic', 'ssoso.inn', 'yukzzp__management_office',
+  'y_not_eat',             // 786 likes, 맛집 전문 (또간집, 솔직후기)
+  'dasupbubu',             // 신상 맛집 추천, 위치+영업시간 포함
+  'noodlefighter87',       // 웨이팅 맛집 리뷰
+  'little_cherry_2026',    // 서울 빵집/맛집 발견
+  'bk.pain_clinic',        // 동네 맛집 추천 (쌀국수 등)
+  'haeonstylecom',         // 서울 야경 맛집
+  'momentdemoment',        // 지역별 맛집 (창동 등)
+  'ssoso.inn',             // 외식 리뷰
 ]
 
 // ── Apify helper ─────────────────────────────────────────
