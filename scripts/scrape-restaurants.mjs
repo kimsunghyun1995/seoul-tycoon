@@ -1,6 +1,8 @@
 /**
- * Local script to scrape trending restaurants and save to Supabase.
+ * Seoul Tycoon — Trending Restaurant Scraper (Threads only)
  * Run: node scripts/scrape-restaurants.mjs
+ * Requires env vars: APIFY_API_TOKEN, KAKAO_REST_API_KEY
+ * Optional: GOOGLE_PLACES_API_KEY, AAC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  */
 
 const APIFY_TOKEN = process.env.APIFY_API_TOKEN ?? ''
@@ -12,10 +14,28 @@ const SUPABASE_URL = process.env.SUPABASE_URL ?? ''
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
 
 if (!APIFY_TOKEN || !KAKAO_KEY) {
-  console.error('Required env vars: APIFY_API_TOKEN, KAKAO_REST_API_KEY')
-  console.error('Optional: GOOGLE_PLACES_API_KEY, AAC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY')
+  console.error('Required: APIFY_API_TOKEN, KAKAO_REST_API_KEY')
   process.exit(1)
 }
+
+// ── Threads search queries ───────────────────────────────
+const THREADS_QUERIES = [
+  // General
+  '서울 맛집 추천', '서울 핫플 맛집', '서울 맛집 웨이팅', '서울 또간집',
+  // By area
+  '홍대 맛집', '성수 맛집', '강남 맛집', '이태원 맛집', '망원 맛집',
+  '을지로 맛집', '연남동 맛집', '합정 맛집', '압구정 맛집', '잠실 맛집',
+  '여의도 맛집', '명동 맛집', '신사 맛집', '서촌 맛집', '익선동 맛집',
+  // By subway
+  '건대입구 맛집', '왕십리 맛집', '삼성역 맛집', '교대 맛집', '신림 맛집',
+]
+
+// ── Known food influencers on Threads ────────────────────
+const FOOD_INFLUENCERS = [
+  'editor_dongwon', 'y_not_eat', 'iam_eating_again', 'dasupbubu',
+  'momentdemoment', 'noodlefighter87', 'little_cherry_2026',
+  'bk.pain_clinic', 'ssoso.inn', 'yukzzp__management_office',
+]
 
 // ── Apify helper ─────────────────────────────────────────
 async function runApifyActor(actorId, input) {
@@ -25,7 +45,7 @@ async function runApifyActor(actorId, input) {
   })
   const data = await res.json()
   const runId = data?.data?.id
-  if (!runId) { console.error('  Failed to start:', data); return [] }
+  if (!runId) { console.error('  Failed:', data?.error?.message ?? 'unknown'); return [] }
 
   for (let i = 0; i < 60; i++) {
     await new Promise(r => setTimeout(r, 5000))
@@ -40,43 +60,81 @@ async function runApifyActor(actorId, input) {
   return await items.json()
 }
 
-// ── LLM ──────────────────────────────────────────────────
+// ── Scrape Threads keyword search ────────────────────────
+async function scrapeThreadsKeyword(query, maxResults = 25) {
+  return await runApifyActor('igview-owner~threads-search-scraper', {
+    searchQuery: query, maxResults,
+  })
+}
+
+// ── Scrape influencer profiles ───────────────────────────
+async function scrapeInfluencerPosts() {
+  const results = []
+  // Use profile scraper for known food influencers
+  for (const username of FOOD_INFLUENCERS.slice(0, 5)) { // Top 5 to save credits
+    console.log(`  📱 @${username}...`)
+    const posts = await runApifyActor('apify~threads-profile-api-scraper', {
+      usernames: [username], maxPosts: 10,
+    }).catch(() => [])
+
+    for (const p of posts) {
+      const text = p?.captionText ?? p?.text ?? ''
+      if (text.includes('맛집') || text.includes('맛있') || text.includes('추천') || text.includes('식당')) {
+        results.push({
+          text,
+          url: p?.postUrl ?? `https://threads.net/@${username}`,
+          username,
+          likes: parseInt(p?.likeCount ?? 0),
+          reposts: parseInt(p?.repostCount ?? 0),
+        })
+      }
+    }
+  }
+  return results
+}
+
+// ── Simple restaurant name extraction (no LLM fallback) ──
+function extractNames(text) {
+  const candidates = []
+  // [식당명] or 【식당명】
+  const brackets = text.match(/[【\[][^【\[\]】]{2,20}[】\]]/g)
+  if (brackets) candidates.push(...brackets.map(m => m.replace(/[【】\[\]]/g, '').trim()))
+  // "OO식당", "OO카페" etc
+  const patterns = text.match(/[가-힣A-Za-z0-9]{2,15}(?:식당|카페|집|정|당|숍|키친|레스토랑|버거|피자|스시|라멘|국밥|곱창|치킨|냉면|설렁탕|순대|떡볶이|빵집|베이커리)/g)
+  if (patterns) candidates.push(...patterns)
+  // 📍 location marker pattern
+  const locMatch = text.match(/📍\s*([가-힣A-Za-z0-9\s]{2,25})/g)
+  if (locMatch) candidates.push(...locMatch.map(m => m.replace('📍', '').trim()))
+  return [...new Set(candidates)].filter(n => n.length >= 2).slice(0, 3)
+}
+
+// ── LLM extraction ───────────────────────────────────────
 async function llmExtract(posts) {
   if (!AAC_API_KEY || posts.length === 0) return []
   const results = []
-
   for (let i = 0; i < posts.length; i += 15) {
     const batch = posts.slice(i, i + 15)
-    const postsText = batch.map((p, idx) => `[${idx + 1}] (${p.source}) ${p.text.slice(0, 250)}`).join('\n\n')
+    const postsText = batch.map((p, idx) => `[${idx + 1}] ${p.text.slice(0, 250)}`).join('\n\n')
+    const prompt = `다음 Threads 게시글에서 서울 식당/카페 이름을 추출하세요.
+광고/협찬은 제외. 음식 이모지와 한줄 이유도 작성.
+JSON 배열로만 응답 (다른 텍스트 없이):
+[{"postIndex":1,"name":"식당명","isAd":false,"emoji":"🍜","reason":"한줄 이유"}]
 
-    const prompt = `다음은 서울 맛집 관련 SNS 게시글들입니다. 각 게시글에서:
-1. 실제 식당 이름을 추출하세요 (없으면 skip)
-2. 광고/협찬인지 판단하세요
-3. 해당 음식에 맞는 이모지 1개 (🍜🍣🍕🍔🍲🥘🍖🥩🍝🍛🥟🍱🍰☕🍺🥗🌮🍗 등)
-4. 한줄 추천 이유
-
-JSON 배열로만 응답. /no_think 태그나 다른 텍스트 없이:
-[{"postIndex": 1, "restaurantName": "식당명", "isAd": false, "emoji": "🍜", "reason": "추천 이유"}]
-
-게시글:\n${postsText}`
-
+${postsText}`
     try {
       const res = await fetch(`${AAC_API_BASE}chat/completions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${AAC_API_KEY}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${AAC_API_KEY}` },
         body: JSON.stringify({ model: 'Qwen3-32B', messages: [{ role: 'user', content: prompt }], temperature: 0.1, max_tokens: 2000 }),
       })
       const data = await res.json()
       const content = data?.choices?.[0]?.message?.content ?? ''
-      const jsonMatch = content.match(/\[[\s\S]*\]/)
+      const jsonMatch = content.match(/\[[\s\S]*?\]/)
       if (jsonMatch) {
         for (const item of JSON.parse(jsonMatch[0])) {
-          if (!item.restaurantName || item.isAd) continue
+          if (!item.name || item.isAd) continue
           const post = batch[(item.postIndex ?? 1) - 1]
-          results.push({
-            name: item.restaurantName, emoji: item.emoji ?? '🍽️',
-            reason: item.reason ?? '', source: post?.source ?? '', sourceUrl: post?.url ?? '',
-          })
+          results.push({ name: item.name, emoji: item.emoji ?? '🍽️', reason: item.reason ?? '', sourceUrl: post?.url ?? '' })
         }
       }
     } catch (e) { console.error('  LLM error:', e.message) }
@@ -96,91 +154,124 @@ async function geocode(name) {
 
 // ── Google Rating ────────────────────────────────────────
 async function googleRating(name, lat, lng) {
+  if (!GOOGLE_API_KEY) return null
   const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(name)}&inputtype=textquery&locationbias=point:${lat},${lng}&fields=place_id,rating,user_ratings_total&key=${GOOGLE_API_KEY}`
   const place = (await (await fetch(url)).json())?.candidates?.[0]
   if (!place) return null
   return { rating: place.rating ?? 0, reviewCount: place.user_ratings_total ?? 0, placeId: place.place_id ?? '' }
 }
 
-const FOOD_EMOJI = { '한식': '🍲', '일식': '🍣', '중식': '🥟', '양식': '🍝', '이탈리안': '🍕', '카페': '☕', '디저트': '🍰', '치킨': '🍗', '피자': '🍕', '버거': '🍔', '분식': '🥘', '국밥': '🍲', '곱창': '🥩', '삼겹살': '🥓', '라멘': '🍜', '술집': '🍺', '스테이크': '🥩', '브런치': '🥞' }
+const FOOD_EMOJI = { '한식': '🍲', '일식': '🍣', '중식': '🥟', '양식': '🍝', '이탈리안': '🍕', '카페': '☕', '디저트': '🍰', '치킨': '🍗', '피자': '🍕', '버거': '🍔', '분식': '🥘', '국밥': '🍲', '곱창': '🥩', '삼겹살': '🥓', '라멘': '🍜', '술집': '🍺', '스테이크': '🥩', '브런치': '🥞', '빵': '🥐', '냉면': '🍜', '설렁탕': '🍲' }
 
-// ── Main ─────────────────────────────────────────────────
-console.log('🔥 Seoul Tycoon Restaurant Scraper\n')
+// ── MAIN ─────────────────────────────────────────────────
+console.log('🔥 Seoul Tycoon Restaurant Scraper (Threads)\n')
 
-// 1. Scrape
-console.log('📸 Scraping Instagram...')
-const instaRaw = await runApifyActor('apify~instagram-hashtag-scraper', {
-  hashtags: [
-    '서울맛집', '핫플', '서울핫플', '줄서는맛집', '요즘맛집',
-    '홍대맛집', '성수맛집', '강남맛집', '이태원맛집', '망원맛집',
-    '을지로맛집', '연남동맛집', '합정맛집', '잠실맛집', '압구정맛집',
-  ],
-  resultsLimit: 80,
-  searchType: 'hashtag',
-}).catch(() => [])
+// Step 1: Scrape Threads keyword searches (batch by 3 to avoid rate limits)
+console.log('💬 Scraping Threads keyword searches...')
+const allThreadsPosts = []
 
-console.log('💬 Scraping Threads...')
-const threadsRaw1 = await runApifyActor('igview-owner~threads-search-scraper', {
-  searchQuery: '서울 맛집', maxResults: 40,
-}).catch(() => [])
-const threadsRaw2 = await runApifyActor('igview-owner~threads-search-scraper', {
-  searchQuery: '서울 핫플 맛집 추천', maxResults: 30,
-}).catch(() => [])
-const threadsRaw = [...threadsRaw1, ...threadsRaw2]
-
-console.log(`\n📊 Instagram: ${instaRaw.length}, Threads: ${threadsRaw.length}`)
-
-// 2. Normalize posts
-const allPosts = [
-  ...instaRaw.filter(p => !p?.isPaidPartnership).map(p => ({
-    text: p?.caption ?? p?.text ?? '', url: p?.url ?? '', source: 'instagram',
-  })),
-  ...threadsRaw.filter(p => p?.isPaidPartnership !== 'True').map(p => ({
-    text: p?.captionText ?? p?.text ?? '', url: p?.postUrl ?? '', source: 'threads',
-  })),
-].filter(p => p.text.length > 10)
-
-console.log(`📝 Posts after filtering: ${allPosts.length}`)
-
-// 3. LLM extract
-console.log('\n🤖 LLM extracting restaurants...')
-const llmResults = await llmExtract(allPosts)
-console.log(`✅ LLM found: ${llmResults.length} restaurants`)
-
-// 4. Aggregate
-const restMap = new Map()
-for (const r of llmResults) {
-  const e = restMap.get(r.name) ?? { emoji: r.emoji, reason: r.reason, instagram: 0, threads: 0, sources: [] }
-  if (r.source === 'instagram') e.instagram++; else e.threads++
-  if (r.sourceUrl) e.sources.push(r.sourceUrl)
-  restMap.set(r.name, e)
+for (let i = 0; i < THREADS_QUERIES.length; i += 3) {
+  const batch = THREADS_QUERIES.slice(i, i + 3)
+  const results = await Promise.all(
+    batch.map(q => scrapeThreadsKeyword(q, 20).catch(() => []))
+  )
+  for (const posts of results) {
+    for (const p of posts) {
+      allThreadsPosts.push({
+        text: p?.captionText ?? '',
+        url: p?.postUrl ?? '',
+        username: p?.username ?? '',
+        likes: parseInt(p?.likeCount ?? 0),
+        isPaid: p?.isPaidPartnership === 'True',
+      })
+    }
+  }
+  if (i + 3 < THREADS_QUERIES.length) {
+    console.log(`  ⏳ ${allThreadsPosts.length} posts so far, waiting...`)
+    await new Promise(r => setTimeout(r, 3000))
+  }
 }
 
-// 5. Geocode + Google
-console.log('\n📍 Geocoding + Google ratings...')
+// Step 2: Scrape influencer profiles
+console.log('\n📱 Scraping influencer profiles...')
+const influencerPosts = await scrapeInfluencerPosts()
+for (const p of influencerPosts) {
+  allThreadsPosts.push({ text: p.text, url: p.url, username: p.username, likes: p.likes, isPaid: false })
+}
+
+// Deduplicate by URL
+const seen = new Set()
+const uniquePosts = allThreadsPosts.filter(p => {
+  if (!p.text || p.text.length < 10 || p.isPaid) return false
+  if (p.url && seen.has(p.url)) return false
+  if (p.url) seen.add(p.url)
+  return true
+})
+
+console.log(`\n📊 Total: ${allThreadsPosts.length} → Unique: ${uniquePosts.length} posts`)
+
+// Step 3: Extract restaurant names
+console.log('\n🔍 Extracting restaurant names...')
+const mentionMap = new Map() // name → { count, sources, likes }
+
+// Try LLM first
+const llmResults = await llmExtract(uniquePosts)
+console.log(`  LLM: ${llmResults.length} restaurants`)
+
+for (const r of llmResults) {
+  const e = mentionMap.get(r.name) ?? { count: 0, sources: [], emoji: r.emoji, reason: r.reason }
+  e.count++
+  if (r.sourceUrl) e.sources.push(r.sourceUrl)
+  mentionMap.set(r.name, e)
+}
+
+// Also do heuristic extraction
+for (const post of uniquePosts) {
+  const names = extractNames(post.text)
+  for (const name of names) {
+    const e = mentionMap.get(name) ?? { count: 0, sources: [], emoji: '🍽️', reason: '' }
+    e.count++
+    if (post.url) e.sources.push(post.url)
+    mentionMap.set(name, e)
+  }
+}
+
+console.log(`  Total unique candidates: ${mentionMap.size}`)
+
+// Step 4: Geocode + Google rating
+console.log('\n📍 Geocoding + ratings...')
 const restaurants = []
-const sorted = [...restMap.entries()].sort((a, b) => (b[1].instagram + b[1].threads) - (a[1].instagram + a[1].threads)).slice(0, 30)
+const sorted = [...mentionMap.entries()]
+  .filter(([name]) => name.length >= 2 && !/^[0-9@#]/.test(name))
+  .sort((a, b) => b[1].count - a[1].count)
+  .slice(0, 40)
 
 for (const [name, info] of sorted) {
   const geo = await geocode(name)
   if (!geo || geo.lat < 37.42 || geo.lat > 37.70 || geo.lng < 126.76 || geo.lng > 127.18) continue
   const g = await googleRating(geo.name, geo.lat, geo.lng).catch(() => null)
+  const cat = geo.category
   restaurants.push({
     name: geo.name, address: geo.address, lat: geo.lat, lng: geo.lng,
-    google_rating: g?.rating ?? null, google_review_count: g?.reviewCount ?? 0, google_place_id: g?.placeId ?? null,
-    instagram_mentions: info.instagram, threads_mentions: info.threads,
-    source_urls: info.sources.slice(0, 5), trending_score: info.instagram * 2 + info.threads * 2,
-    category: geo.category, emoji: info.emoji || Object.entries(FOOD_EMOJI).find(([k]) => geo.category.includes(k))?.[1] || '🍽️',
-    llm_reason: info.reason || null, updated_at: new Date().toISOString(),
+    google_rating: g?.rating ?? null, google_review_count: g?.reviewCount ?? 0,
+    google_place_id: g?.placeId ?? null,
+    instagram_mentions: 0, threads_mentions: info.count,
+    source_urls: [...new Set(info.sources)].slice(0, 5),
+    trending_score: info.count * 3,
+    category: cat,
+    emoji: info.emoji !== '🍽️' ? info.emoji : (Object.entries(FOOD_EMOJI).find(([k]) => cat.includes(k))?.[1] || '🍽️'),
+    llm_reason: info.reason || null,
+    updated_at: new Date().toISOString(),
   })
   process.stdout.write(`  ${geo.name} ⭐${g?.rating ?? '?'}\n`)
   await new Promise(r => setTimeout(r, 200))
 }
 
-// 5b. Fallback
-if (restaurants.length < 10) {
+// Step 4b: Kakao fallback
+if (restaurants.length < 15) {
   console.log('\n🔄 Kakao fallback...')
-  for (const q of ['홍대 맛집', '성수 맛집', '강남 맛집', '이태원 맛집', '망원 맛집', '을지로 맛집', '연남동 맛집', '합정 맛집', '잠실 맛집', '여의도 맛집', '명동 맛집', '압구정 맛집']) {
+  const areas = ['홍대 맛집', '성수 맛집', '강남 맛집', '이태원 맛집', '망원 맛집', '을지로 맛집', '연남동 맛집', '합정 맛집', '잠실 맛집', '여의도 맛집', '명동 맛집', '압구정 맛집', '신사 맛집', '익선동 맛집', '서촌 맛집']
+  for (const q of areas) {
     const url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(q)}&category_group_code=FD6&sort=accuracy&size=3`
     const docs = (await (await fetch(url, { headers: { Authorization: `KakaoAK ${KAKAO_KEY}` } })).json())?.documents ?? []
     for (const d of docs) {
@@ -203,14 +294,12 @@ if (restaurants.length < 10) {
 
 console.log(`\n🔥 Total: ${restaurants.length} restaurants`)
 
-// 6. Save to Supabase via REST API
+// Step 5: Save
 if (restaurants.length > 0 && SUPABASE_KEY) {
   console.log('\n💾 Saving to Supabase...')
-  // Delete old
   await fetch(`${SUPABASE_URL}/rest/v1/hot_restaurants?id=neq.00000000-0000-0000-0000-000000000000`, {
     method: 'DELETE', headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
   })
-  // Insert new
   const res = await fetch(`${SUPABASE_URL}/rest/v1/hot_restaurants`, {
     method: 'POST',
     headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
@@ -218,9 +307,8 @@ if (restaurants.length > 0 && SUPABASE_KEY) {
   })
   console.log(`  Status: ${res.status} ${res.statusText}`)
 } else if (!SUPABASE_KEY) {
-  console.log('\n⚠️  SUPABASE_SERVICE_ROLE_KEY not set. Results not saved.')
-  console.log('  Set it with: export SUPABASE_SERVICE_ROLE_KEY=your_key')
+  console.log('\n⚠️  SUPABASE_SERVICE_ROLE_KEY not set.')
 }
 
 console.log('\n✅ Done!')
-restaurants.forEach((r, i) => console.log(`  ${i + 1}. ${r.emoji} ${r.name} ⭐${r.google_rating ?? '?'} (IG:${r.instagram_mentions} TH:${r.threads_mentions})`))
+restaurants.forEach((r, i) => console.log(`  ${i + 1}. ${r.emoji} ${r.name} ⭐${r.google_rating ?? '?'} (TH:${r.threads_mentions})`))
