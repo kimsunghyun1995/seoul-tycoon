@@ -9,7 +9,7 @@ const APIFY_TOKEN = process.env.APIFY_API_TOKEN ?? ''
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY ?? ''
 const KAKAO_KEY = process.env.KAKAO_REST_API_KEY ?? ''
 const AAC_API_KEY = process.env.AAC_API_KEY ?? ''
-const AAC_API_BASE = process.env.AAC_API_BASE ?? 'https://aac-api.navercorp.com/'
+const AAC_API_BASE = process.env.AAC_API_BASE ?? 'https://namc-aigw.io.naver.com/v1/'
 const SUPABASE_URL = process.env.SUPABASE_URL ?? ''
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
 
@@ -120,10 +120,13 @@ async function llmExtract(posts) {
   for (let i = 0; i < posts.length; i += 15) {
     const batch = posts.slice(i, i + 15)
     const postsText = batch.map((p, idx) => `[${idx + 1}] ${p.text.slice(0, 250)}`).join('\n\n')
-    const prompt = `다음 Threads 게시글에서 서울 식당/카페 이름을 추출하세요.
-광고/협찬은 제외. 음식 이모지와 한줄 이유도 작성.
-JSON 배열로만 응답 (다른 텍스트 없이):
+    const prompt = `/no_think
+다음 Threads 게시글에서 서울 식당/카페 이름을 추출하세요.
+광고/협찬은 제외. 음식 이모지와 한줄 추천 이유도 작성.
+JSON 배열로만 응답하세요. 설명이나 다른 텍스트 없이 JSON만:
 [{"postIndex":1,"name":"식당명","isAd":false,"emoji":"🍜","reason":"한줄 이유"}]
+
+식당이 없는 게시글은 포함하지 마세요.
 
 ${postsText}`
     try {
@@ -133,8 +136,11 @@ ${postsText}`
         body: JSON.stringify({ model: 'Qwen3-32B', messages: [{ role: 'user', content: prompt }], temperature: 0.1, max_tokens: 2000 }),
       })
       const data = await res.json()
-      const content = data?.choices?.[0]?.message?.content ?? ''
-      const jsonMatch = content.match(/\[[\s\S]*?\]/)
+      let content = data?.choices?.[0]?.message?.content ?? ''
+      // Remove <think>...</think> tags and markdown code blocks
+      content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
+      content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+      const jsonMatch = content.match(/\[[\s\S]*\]/)
       if (jsonMatch) {
         for (const item of JSON.parse(jsonMatch[0])) {
           if (!item.name || item.isAd) continue

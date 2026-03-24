@@ -5,7 +5,7 @@ const APIFY_TOKEN = Deno.env.get("APIFY_API_TOKEN") ?? ""
 const GOOGLE_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY") ?? ""
 const KAKAO_KEY = Deno.env.get("KAKAO_REST_API_KEY") ?? ""
 const AAC_API_KEY = Deno.env.get("AAC_API_KEY") ?? ""
-const AAC_API_BASE = Deno.env.get("AAC_API_BASE") ?? "https://aac-api.navercorp.com/"
+const AAC_API_BASE = Deno.env.get("AAC_API_BASE") ?? "https://namc-aigw.io.naver.com/v1/"
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? ""
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 
