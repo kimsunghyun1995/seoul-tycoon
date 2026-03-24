@@ -146,6 +146,8 @@ export interface HotRestaurant {
   trending_score: number
   category: string | null
   image_url: string | null
+  emoji: string
+  llm_reason: string | null
   created_at: string
 }
 

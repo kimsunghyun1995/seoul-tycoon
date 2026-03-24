@@ -105,7 +105,7 @@ export default function RestaurantLayer({ map, restaurants, onSelect }: Restaura
 
       const fireIcon = document.createElement('div')
       fireIcon.className = 'fire-icon'
-      fireIcon.textContent = '🔥'
+      fireIcon.textContent = restaurant.emoji || '🍽️'
 
       const tooltip = document.createElement('div')
       tooltip.className = 'restaurant-tooltip'

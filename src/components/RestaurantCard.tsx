@@ -41,7 +41,7 @@ export default function RestaurantCard({ restaurant, onClose }: RestaurantCardPr
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 18 }}>🔥</span>
+          <span style={{ fontSize: 18 }}>{restaurant.emoji || '🍽️'}</span>
           <span
             style={{
               fontWeight: 700,
@@ -135,6 +135,34 @@ export default function RestaurantCard({ restaurant, onClose }: RestaurantCardPr
           </div>
         </div>
 
+        {/* LLM reason */}
+        {restaurant.llm_reason && (
+          <div style={{ padding: '6px 8px', background: '#fff8e1', borderRadius: 8, fontSize: 12, color: '#795548' }}>
+            💡 {restaurant.llm_reason}
+          </div>
+        )}
+
+        {/* Source links */}
+        {restaurant.source_urls.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingBottom: 8, borderBottom: '1px solid #f5f5f5' }}>
+            {restaurant.source_urls.slice(0, 3).map((url, i) => (
+              <a
+                key={i}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontSize: 11, color: url.includes('threads') ? '#000' : '#E1306C',
+                  background: url.includes('threads') ? '#f0f0f0' : '#fce4ec',
+                  padding: '2px 8px', borderRadius: 10, textDecoration: 'none', fontWeight: 600,
+                }}
+              >
+                {url.includes('threads') ? '💬 Threads' : '📸 Instagram'} {i + 1}
+              </a>
+            ))}
+          </div>
+        )}
+
         {/* Address & category */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
@@ -143,11 +171,11 @@ export default function RestaurantCard({ restaurant, onClose }: RestaurantCardPr
               {restaurant.address}
             </span>
           </div>
-          {(restaurant.category != null) && (
+          {restaurant.category && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 13 }}>🏷️</span>
               <span style={{ fontSize: 12, color: '#666' }}>
-                {restaurant.category} · 요즘 핫한 맛집
+                {restaurant.category}
               </span>
             </div>
           )}

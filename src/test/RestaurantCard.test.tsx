@@ -18,7 +18,7 @@ const mockRestaurant: HotRestaurant = {
   trending_score: 87.5,
   category: '한식',
   image_url: null,
-  created_at: '2026-03-24T00:00:00Z',
+  created_at: '2026-03-24T00:00:00Z', emoji: '🍜', llm_reason: null,
 }
 
 describe('RestaurantCard', () => {
@@ -57,7 +57,7 @@ describe('RestaurantCard', () => {
 
   it('displays category', () => {
     render(<RestaurantCard restaurant={mockRestaurant} onClose={vi.fn()} />)
-    expect(screen.getByText('한식 · 요즘 핫한 맛집')).toBeInTheDocument()
+    expect(screen.getByText('한식')).toBeInTheDocument()
   })
 
   it('does not render category row when category is null', () => {

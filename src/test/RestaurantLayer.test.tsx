@@ -46,7 +46,7 @@ const mockRestaurants: HotRestaurant[] = [
     trending_score: 90,
     category: '양식',
     image_url: null,
-    created_at: '2026-03-24T00:00:00Z',
+    created_at: '2026-03-24T00:00:00Z', emoji: '🍜', llm_reason: null,
   },
   {
     id: 'r002',
@@ -63,7 +63,7 @@ const mockRestaurants: HotRestaurant[] = [
     trending_score: 60,
     category: null,
     image_url: null,
-    created_at: '2026-03-24T00:00:00Z',
+    created_at: '2026-03-24T00:00:00Z', emoji: '🍜', llm_reason: null,
   },
 ]
 
