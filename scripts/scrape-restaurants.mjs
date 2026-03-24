@@ -110,13 +110,23 @@ console.log('🔥 Seoul Tycoon Restaurant Scraper\n')
 // 1. Scrape
 console.log('📸 Scraping Instagram...')
 const instaRaw = await runApifyActor('apify~instagram-hashtag-scraper', {
-  hashtags: ['서울맛집', '핫플', '서울핫플', '줄서는맛집'], resultsLimit: 40, searchType: 'hashtag',
+  hashtags: [
+    '서울맛집', '핫플', '서울핫플', '줄서는맛집', '요즘맛집',
+    '홍대맛집', '성수맛집', '강남맛집', '이태원맛집', '망원맛집',
+    '을지로맛집', '연남동맛집', '합정맛집', '잠실맛집', '압구정맛집',
+  ],
+  resultsLimit: 80,
+  searchType: 'hashtag',
 }).catch(() => [])
 
 console.log('💬 Scraping Threads...')
-const threadsRaw = await runApifyActor('igview-owner~threads-search-scraper', {
-  searchQuery: '서울 맛집', maxResults: 30,
+const threadsRaw1 = await runApifyActor('igview-owner~threads-search-scraper', {
+  searchQuery: '서울 맛집', maxResults: 40,
 }).catch(() => [])
+const threadsRaw2 = await runApifyActor('igview-owner~threads-search-scraper', {
+  searchQuery: '서울 핫플 맛집 추천', maxResults: 30,
+}).catch(() => [])
+const threadsRaw = [...threadsRaw1, ...threadsRaw2]
 
 console.log(`\n📊 Instagram: ${instaRaw.length}, Threads: ${threadsRaw.length}`)
 
