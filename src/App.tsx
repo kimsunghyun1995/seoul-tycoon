@@ -9,13 +9,16 @@ import WeatherOverlay, { getDayPeriod } from './components/WeatherOverlay'
 import RankingToggle from './components/RankingToggle'
 import RankingPanel from './components/RankingPanel'
 import SubwayStationLayer from './components/SubwayStationLayer'
+import RestaurantLayer from './components/RestaurantLayer'
+import RestaurantCard from './components/RestaurantCard'
 import { useSeoulData } from './hooks/useSeoulData'
 import { useEventData } from './hooks/useEventData'
 import { useRanking, SortMode } from './hooks/useRanking'
 import { useSubwayData } from './hooks/useSubwayData'
+import { useHotRestaurants } from './hooks/useHotRestaurants'
 import { LOCATIONS, LOCATION_MAP } from './services/LocationRegistry'
 import type { Map as MaplibreMap } from 'maplibre-gl'
-import type { CongestionLevel } from './types'
+import type { CongestionLevel, HotRestaurant } from './types'
 
 const API_KEY = import.meta.env.VITE_SEOUL_API_KEY ?? ''
 
@@ -27,6 +30,8 @@ export default function App() {
   const handleMapLoaded = useCallback((map: MaplibreMap) => setMapInstance(map), [])
   const [rankingOpen, setRankingOpen] = useState(false)
   const [sortMode, setSortMode] = useState<SortMode>('congestion')
+  const { restaurants: hotRestaurants } = useHotRestaurants()
+  const [selectedRestaurant, setSelectedRestaurant] = useState<HotRestaurant | null>(null)
   const { events, eventsByArea, loading: eventsLoading, fetch: fetchEvents } = useEventData()
   const { nearbyStations, arrivals: subwayArrivals, loading: subwayLoading } = useSubwayData(selectedCode)
 
@@ -117,6 +122,16 @@ export default function App() {
         />
         <LandmarkLayer map={mapInstance} />
         <SubwayStationLayer map={mapInstance} />
+        <RestaurantLayer
+          map={mapInstance}
+          restaurants={hotRestaurants}
+          onSelect={(r) => {
+            setSelectedRestaurant(r)
+            if (mapRef.current) {
+              mapRef.current.flyTo({ center: [r.lng, r.lat], zoom: 15, duration: 1500 })
+            }
+          }}
+        />
         <CharacterSystem
           map={mapInstance}
           locations={LOCATIONS}
@@ -168,6 +183,14 @@ export default function App() {
         >
           업데이트: {lastUpdated.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
         </div>
+      )}
+
+      {/* Restaurant card */}
+      {selectedRestaurant && (
+        <RestaurantCard
+          restaurant={selectedRestaurant}
+          onClose={() => setSelectedRestaurant(null)}
+        />
       )}
 
       {/* Ranking toggle FAB */}

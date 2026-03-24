@@ -130,6 +130,25 @@ export interface PredictionFactor {
   weight: number
 }
 
+// Hot/trending restaurant from Supabase
+export interface HotRestaurant {
+  id: string
+  name: string
+  address: string
+  lat: number
+  lng: number
+  google_rating: number | null
+  google_review_count: number
+  google_place_id: string | null
+  instagram_mentions: number
+  threads_mentions: number
+  source_urls: string[]
+  trending_score: number
+  category: string | null
+  image_url: string | null
+  created_at: string
+}
+
 // Subway station data
 export interface SubwayStation {
   id: string                    // e.g., "ST001"
